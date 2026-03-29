@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CompanyDashboard1 extends StatefulWidget {
   const CompanyDashboard1({super.key});
@@ -9,10 +10,26 @@ class CompanyDashboard1 extends StatefulWidget {
 }
 
 class _CompanyDashboard1State extends State<CompanyDashboard1> {
+  String companyName = "Company Dashboard";
+  @override
+void initState() {
+  super.initState();
+  loadCompanyName();
+}
+
+Future<void> loadCompanyName() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  setState(() {
+    companyName = prefs.getString('CompanyName') ?? "Company Dashboard";
+  });
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Company Dashboard"),
+      appBar: AppBar(automaticallyImplyLeading: false,
+         
+        title: Center(child: Text("$companyName Dashboard")),
       backgroundColor: Color(0xFF99C13D),
       ),
       body: Padding(
@@ -44,7 +61,9 @@ class _CompanyDashboard1State extends State<CompanyDashboard1> {
                   title: "Manage Drivers & Vehicles",
                   subtitle: "Manage all Drivers",
                   icon: Icons.drive_eta_outlined,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushNamed(context, '/manageDriverVehicles');
+                  },
                 ),
               ),
           
@@ -63,18 +82,7 @@ class _CompanyDashboard1State extends State<CompanyDashboard1> {
           
               const SizedBox(height: 15),
           
-              SizedBox(
-                height: 200,
-                width: double.infinity,
-                child: CustomCard(
-                  title: "Manage Users",
-                  subtitle: "Manage all Users",
-                  icon: Icons.people_outline,
-                  onTap: () {},
-                ),
-              ),
-                 const SizedBox(height: 15),
-          
+              
               SizedBox(
                 height: 200,
                 width: double.infinity,

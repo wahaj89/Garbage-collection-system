@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/companyController.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ViewAllZones extends StatefulWidget {
   const ViewAllZones({super.key});
@@ -21,9 +21,19 @@ class _ViewAllZonesState extends State<ViewAllZones> {
     loadZones();
   }
 
-  // 🔥 Load zones from DB
+  // 🔥 Load zones dynamically for logged-in company
   Future<void> loadZones() async {
-    final zones = await CompanyApi.getZones(1); // TODO: dynamic CompanyID
+    final prefs = await SharedPreferences.getInstance();
+    int? companyId = prefs.getInt('CompanyID');
+
+    if (companyId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("CompanyID not found")),
+      );
+      return;
+    }
+
+    final zones = await CompanyApi.getZones(companyId);
 
     Set<Polygon> loadedPolygons = {};
 
@@ -60,7 +70,7 @@ class _ViewAllZonesState extends State<ViewAllZones> {
       ),
       body: GoogleMap(
         initialCameraPosition: const CameraPosition(
-          target: LatLng(33.6844, 73.0479), // default
+          target: LatLng(33.6844, 73.0479), // default Islamabad
           zoom: 13,
         ),
         onMapCreated: (controller) {

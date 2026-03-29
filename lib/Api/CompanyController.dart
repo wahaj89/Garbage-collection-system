@@ -13,6 +13,7 @@ class CompanyApi {
         'ngrok-skip-browser-warning': 'true',
       };
 
+
   // ================= LOGIN =================
   Future<http.Response> login(String email, String password) async {
     final url = Uri.parse("$_baseUrl/company/login");
@@ -172,18 +173,22 @@ Future<http.Response> addPlan(
 }
 // =================== view plans ===================
 Future<List<dynamic>> viewPlans() async {
-  final token = await getToken();
-  if (token == null) {
-    return Future.error('No token found');
+  final prefs = await SharedPreferences.getInstance();
+
+  int? companyId = prefs.getInt('CompanyID');
+
+  if (companyId == null) {
+    throw Exception("CompanyID not found in SharedPreferences");
   }
 
-  final url = Uri.parse("$_baseUrl/subscriptions/viewPlans");
+  final url = Uri.parse(
+    "$_baseUrl/subscriptions/viewPlans?CompanyID=$companyId",
+  );
 
   final response = await http.get(
     url,
     headers: {
       ..._headers,
-      'Authorization': 'Bearer $token',
     },
   );
 
@@ -193,7 +198,7 @@ Future<List<dynamic>> viewPlans() async {
   } else {
     throw HttpException('Failed to load plans: ${response.body}');
   }
-  }
+}
 
   //
   static Future<String> addZone({
@@ -241,4 +246,63 @@ Future<List<dynamic>> viewPlans() async {
       return [];
     }
   }
+  // add bag
+   static Future<Map<String, dynamic>> generateBags({
+    required int userId,
+    required int quantity,
+    required String bagType,
+    required double weightLimit,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    int? companyId = prefs.getInt('CompanyID');
+
+    if (companyId == null) {
+      return {"error": "CompanyID not found"};
+    }
+
+    final url = Uri.parse("$_baseUrl/bags/add");
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: jsonEncode({
+        "UserID": userId,
+        "CompanyID": companyId,
+        "Quantity": quantity,
+        "BagType": bagType,
+        "WeightLimit": weightLimit,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      return {
+        "error": "Failed to generate bags: ${response.body}",
+      };
+    }
+  }
+  // fetch subscribers
+   Future<List<dynamic>> fetchSubscribers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final CompanyId = prefs.getInt('CompanyID'); 
+
+    if (CompanyId == null) {
+      throw Exception("CompanyID not found in SharedPreferences");
+    }
+
+    final url = Uri.parse("$_baseUrl/company/viewSubscribedUsers?CompanyID=$CompanyId");
+
+    final response = await http.get(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    } else {
+      throw Exception("Failed to load subscribers: ${response.body}");
+    }
+  }
+
 }

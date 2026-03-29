@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
 
-class Companydashboard extends StatefulWidget {
-  const Companydashboard({super.key});
+class ManageDriverVehicles extends StatefulWidget {
+  const ManageDriverVehicles({super.key});
 
   @override
-  State<Companydashboard> createState() => _CompanydashboardState();
+  State<ManageDriverVehicles> createState() => _ManageDriverVehiclesState();
 }
 
-class _CompanydashboardState extends State<Companydashboard> {
-  final double columnSpacing = 20;
-
+class _ManageDriverVehiclesState extends State<ManageDriverVehicles> {
+    final double columnSpacing = 20;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+     return Scaffold(
       appBar: AppBar(
        
-        title: const Center(child: Text("Manage Plans")),
+        title: const Center(child: Text("Manage Driver & Vehicles")),
         backgroundColor: const Color(0xFF99C13D),
       ),
       body: Padding(
@@ -31,19 +30,19 @@ class _CompanydashboardState extends State<Companydashboard> {
               buildRow(
                 context,
                 CustomCard(
-                  title: "Add New Plan",
+                  title: "Add New Driver",
                   subtitle: '',
-                  icon: Icons.subscriptions,
+                  icon: Icons.person_add,
                   onTap: () {
-                    Navigator.pushNamed(context, '/addPlan');
+                    Navigator.pushNamed(context, '/addDriver');
                   },
                 ),
                 CustomCard(
-                  title: "View All Plans",
+                  title: "View All Drivers",
                   subtitle: '',
                   icon: Icons.list_alt,
                   onTap: () {
-                    Navigator.pushNamed(context, '/viewPlans');
+                    Navigator.pushNamed(context, '/viewdrivers');
                   },
                 ),
               ),
@@ -54,20 +53,18 @@ class _CompanydashboardState extends State<Companydashboard> {
               buildRow(
                 context,
                 CustomCard(
-                  title: "Generate QR Code",
+                  title: "Add New Vehicle",
                   subtitle: '',
-                  icon: Icons.qr_code,
+                  icon: Icons.local_shipping,
                   onTap: () {
                     Navigator.pushNamed(context, '/generateQRCode');
                   },
                 ),
                 CustomCard(
-                  title: "View Subscribers",
+                  title: "View All Vehicles",
                   subtitle: '',
-                  icon: Icons.people,
-                  onTap: () {
-                    Navigator.pushNamed(context, '/viewSubscribers');
-                  },
+                  icon: Icons.local_shipping,
+                  onTap: () {},
                 ),
               ),
 
@@ -89,3 +86,4 @@ class _CompanydashboardState extends State<Companydashboard> {
     );
   }
 }
+ 

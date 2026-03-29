@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Newuserdashboard extends StatefulWidget {
- final String? UserId;
- final  String? Fullname;
-  const Newuserdashboard({super.key,  this.UserId,  this.Fullname});
+  final String? UserId;
+  const Newuserdashboard({super.key, this.UserId});
 
   @override
   State<Newuserdashboard> createState() => _NewuserdashboardState();
@@ -12,10 +12,25 @@ class Newuserdashboard extends StatefulWidget {
 
 class _NewuserdashboardState extends State<Newuserdashboard> {
   int _selectedIndex = 0;
+  String userName = "User Dashboard"; // default before loading
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserName();
+  }
+
+  Future<void> loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      // Try SharedPreferences first, fallback to widget param
+      userName = prefs.getString('UserName') ?? "User Dashboard";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    double cardHeight = 200; 
+    double cardHeight = 200;
 
     return Scaffold(
       appBar: AppBar(
@@ -31,7 +46,7 @@ class _NewuserdashboardState extends State<Newuserdashboard> {
             children: [
               const SizedBox(height: 10),
               Text(
-                'Welcome ${widget.Fullname}!',
+                'Welcome $userName!',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 24,
@@ -40,7 +55,6 @@ class _NewuserdashboardState extends State<Newuserdashboard> {
               ),
               const SizedBox(height: 25),
 
-           
               Row(
                 children: [
                   Expanded(
@@ -48,7 +62,8 @@ class _NewuserdashboardState extends State<Newuserdashboard> {
                       height: cardHeight,
                       child: CustomCard(
                         title: "Subscription",
-                        subtitle: "Subscribe to a company or View your current subscription",
+                        subtitle:
+                            "Subscribe to a company or View your current subscription",
                         icon: Icons.subscriptions,
                         onTap: () {
                           Navigator.pushNamed(context, '/viewcompanies');
@@ -75,7 +90,6 @@ class _NewuserdashboardState extends State<Newuserdashboard> {
 
               const SizedBox(height: 20),
 
-           
               Row(
                 children: [
                   Expanded(
@@ -145,7 +159,6 @@ class _NewuserdashboardState extends State<Newuserdashboard> {
           ),
         ],
       ),
-    
     );
   }
 }

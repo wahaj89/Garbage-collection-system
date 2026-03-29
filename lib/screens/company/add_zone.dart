@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/companyController.dart';
+import 'package:garbage_collection_system/custom_widgets/inputfield.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddZone extends StatefulWidget {
   const AddZone({super.key});
@@ -18,7 +19,11 @@ class _AddZoneState extends State<AddZone> {
   Set<Polygon> polygons = {};
   Set<Marker> markers = {};
 
-  // 📍 GeoJSON function
+  // 🔹 Controllers
+  TextEditingController nameController = TextEditingController();
+  TextEditingController descController = TextEditingController();
+
+  // 📍 GeoJSON
   Map<String, dynamic> createGeoJSON() {
     return {
       "type": "Polygon",
@@ -39,21 +44,43 @@ class _AddZoneState extends State<AddZone> {
       return;
     }
 
+    if (nameController.text.isEmpty || descController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Name & Description required")),
+      );
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    int? companyId = prefs.getInt('CompanyID');
+
+    if (companyId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("CompanyID not found")),
+      );
+      return;
+    }
+
     final geoJson = createGeoJSON();
 
     final response = await CompanyApi.addZone(
-      companyId: 1, 
-      name: "Zone 1",
-      description: "Test Zone",
+      companyId: companyId,
+      name: nameController.text.trim(),
+      description: descController.text.trim(),
       geoJson: geoJson,
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(response)),
     );
+
+    // 🔥 Clear after save
+    clearPolygon();
+    nameController.clear();
+    descController.clear();
   }
 
-  // ❌ Clear
+  // 🧹 Clear
   void clearPolygon() {
     setState(() {
       polygonPoints.clear();
@@ -72,6 +99,7 @@ class _AddZoneState extends State<AddZone> {
     }
   }
 
+  // 🔄 Update polygon
   void updatePolygon() {
     polygons.clear();
 
@@ -109,23 +137,51 @@ class _AddZoneState extends State<AddZone> {
           ),
         ],
       ),
-      body: GoogleMap(
-        initialCameraPosition: const CameraPosition(
-          target: LatLng(33.6844, 73.0479), // Islamabad
-          zoom: 14,
-        ),
-        onMapCreated: (controller) {
-          mapController = controller;
-        },
-        onTap: (LatLng point) {
-          setState(() {
-            polygonPoints.add(point);
-            updatePolygon();
-          });
-        },
-        polygons: polygons,
-        markers: markers,
+
+      body: Column(
+        children: [
+          // 🔹 Custom Inputs
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CustomInput(
+              label: "Zone Name",
+              controller: nameController,
+              suffixIcon: const Icon(Icons.map),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CustomInput(
+              label: "Description",
+              controller: descController,
+              suffixIcon: const Icon(Icons.description),
+            ),
+          ),
+
+          // 🗺️ Map
+          Expanded(
+            child: GoogleMap(
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(33.6844, 73.0479), // Islamabad
+                zoom: 14,
+              ),
+              onMapCreated: (controller) {
+                mapController = controller;
+              },
+              onTap: (LatLng point) {
+                setState(() {
+                  polygonPoints.add(point);
+                  updatePolygon();
+                });
+              },
+              polygons: polygons,
+              markers: markers,
+            ),
+          ),
+        ],
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: saveZone,
         child: const Icon(Icons.save),

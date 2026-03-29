@@ -5,6 +5,7 @@ import 'package:garbage_collection_system/screens/company/add_zone.dart';
 import 'package:garbage_collection_system/screens/company/addplan.dart';
 import 'package:garbage_collection_system/screens/company/companyDashBoard.dart' hide Companydashboard;
 import 'package:garbage_collection_system/screens/company/generate_qrcode.dart';
+import 'package:garbage_collection_system/screens/company/manage_driver_vehicles.dart';
 import 'package:garbage_collection_system/screens/company/manage_plans.dart';
 import 'package:garbage_collection_system/screens/company/Companies.dart';
 import 'package:garbage_collection_system/screens/company/company_dashboard1.dart';
@@ -13,6 +14,7 @@ import 'package:garbage_collection_system/screens/company/viewDrivers.dart';
 import 'package:garbage_collection_system/screens/company/view_Plans.dart';
 import 'package:garbage_collection_system/screens/company/view_all_user.dart';
 import 'package:garbage_collection_system/screens/company/view_all_zones.dart';
+import 'package:garbage_collection_system/screens/company/view_subscribers.dart';
 import 'package:garbage_collection_system/screens/splash/splash2.dart';
 import 'package:garbage_collection_system/screens/user/fileacomplaint.dart';
 
@@ -54,6 +56,8 @@ class MyApp extends StatelessWidget {
         '/managezones': (context) => const ManageZones(),
         '/addzone': (context) => const AddZone(),
         '/viewzones': (context) => const ViewAllZones(),
+        '/manageDriverVehicles': (context) => const ManageDriverVehicles(),
+        '/viewSubscribers': (context) => const ViewSubscribers(),
       },
     );
   }

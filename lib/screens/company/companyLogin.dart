@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/CompanyController.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:garbage_collection_system/custom_widgets/button.dart';
 import 'package:garbage_collection_system/custom_widgets/inputfield.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,11 +39,18 @@ class _LoginscreenState extends State<Loginscreen> {
     );
 
     final data = jsonDecode(res.body);
+String token = data['token'];
 
+Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('token', data['token']);
-  print("Token saved: ${prefs.getString('token')}");
+int companyId = decodedToken['CompanyID'];
+String companyName = decodedToken['Name'];
+
+SharedPreferences prefs = await SharedPreferences.getInstance();
+await prefs.setString('token', token);
+await prefs.setInt('CompanyID', companyId);
+await prefs.setString('CompanyName', companyName);
+print("CompanyID from token: $companyId");
 
    
     if (!mounted) return;
