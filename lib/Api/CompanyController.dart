@@ -286,23 +286,225 @@ Future<List<dynamic>> viewPlans() async {
     }
   }
   // fetch subscribers
-   Future<List<dynamic>> fetchSubscribers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final CompanyId = prefs.getInt('CompanyID'); 
+  Future<Map<String, dynamic>> fetchSubscribers() async {
+  final prefs = await SharedPreferences.getInstance();
+  final CompanyId = prefs.getInt('CompanyID'); 
 
-    if (CompanyId == null) {
-      throw Exception("CompanyID not found in SharedPreferences");
-    }
+  if (CompanyId == null) {
+    throw Exception("CompanyID not found in SharedPreferences");
+  }
 
-    final url = Uri.parse("$_baseUrl/company/viewSubscribedUsers?CompanyID=$CompanyId");
+  final url = Uri.parse("$_baseUrl/company/viewSubscribedUsers?CompanyID=$CompanyId");
 
-    final response = await http.get(url, headers: _headers);
+  final response = await http.get(url, headers: _headers);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+
+    return {
+      "active": data["active"] ?? [],
+      "inactive": data["inactive"] ?? [],
+    };
+  } else {
+    throw Exception("Failed to load subscribers: ${response.body}");
+  }
+}
+// fetch companies by vehicles
+ static Future<List<dynamic>> getCompanyVehicles() async {
+   final prefs = await SharedPreferences.getInstance();
+
+  int? companyId = prefs.getInt('CompanyID');
+    final response = await http.get(
+      Uri.parse("$_baseUrl/vehicle/companyVehicles?CompanyID=$companyId"),
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
+    );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as List<dynamic>;
+      return jsonDecode(response.body);
     } else {
-      throw Exception("Failed to load subscribers: ${response.body}");
+      throw Exception("Failed to load vehicles");
+    }
+  }
+  //view extra pickup requests
+  static Future<Map<String, dynamic>> viewExtraPickupRequests() async {
+  final prefs = await SharedPreferences.getInstance();
+  int? companyId = prefs.getInt('CompanyID');
+
+  final response = await http.get(
+    Uri.parse("$_baseUrl/company/viewExtraRequests?CompanyID=$companyId "),
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true"
+      ,
+    },
+  );
+
+  final data = jsonDecode(response.body);
+
+  if (response.statusCode == 200) {
+    return {
+      "requests": data["requests"],
+    };
+  } else {
+    return {
+      "error": data["message"] ?? "Something went wrong",
+    };
+  }
+}
+//add driver
+ static Future<bool> addDriver({
+    required String fullName,
+    required String phone,
+    required String license,
+    required int vehicleId,
+    required String password,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    int? companyId = prefs.getInt('CompanyID');
+    final response = await http.post(
+      Uri.parse("$_baseUrl/drivers/addDriver?CompanyID=$companyId"),
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
+      body: jsonEncode({
+        "FullName": fullName,
+        "Phone": phone,
+        "LicenseNumber": license,
+        "VehicleID": vehicleId,
+        "Password": password,
+      }),
+    );
+
+    return response.statusCode == 201;
+  }
+  //add vehicle
+  static Future<bool> addVehicle({
+  required String plateNumber,
+  required String model,
+  required String capacity,
+}) async {
+  final prefs = await SharedPreferences.getInstance();
+  int? companyId = prefs.getInt('CompanyID');
+
+  final response = await http.post(
+    Uri.parse("$_baseUrl/vehicle/addVehicle?CompanyID=$companyId"),
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+    },
+    body: jsonEncode({
+      "PlateNumber": plateNumber,
+      "Model": model,
+      "Capacity": capacity,
+    }),
+  );
+
+  print("ADD VEHICLE RESPONSE: ${response.body}");
+
+  return response.statusCode == 201;
+}
+//view complaints
+  static Future<Map<String, List>> getComplaints() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      int? companyId = prefs.getInt('CompanyID');
+      final response =
+          await http.get(Uri.parse("$_baseUrl/users/viewComplaints?CompanyID=$companyId"));
+
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+
+        List resolved =
+            data.where((c) => c['Status'] == 'Resolved').toList();
+
+        List pending =
+            data.where((c) => c['Status'] != 'Resolved').toList();
+
+        return {
+          "resolved": resolved,
+          "pending": pending,
+        };
+      } else {
+        throw Exception("Failed to load complaints");
+      }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+  //view drivers with vehicles
+  static Future<List> getDrivers() async {
+    final prefs = await SharedPreferences.getInstance();
+    int? companyId = prefs.getInt('CompanyID');
+    final res = await http.get(
+      Uri.parse('$_baseUrl/company/getDriversWithVehicles?CompanyID=$companyId'),
+      headers: {
+        "Content-Type": "application/json",
+       
+      },
+    );
+    print(res.body);
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body);
+    } else {
+      throw Exception("Failed to load drivers");
     }
   }
 
+  // ✅ Create Slot + Schedule (combined API)
+  static Future<void> createSlot({
+  required int zoneID,
+  required String dayOfWeek,
+  required String startTime,
+  required String endTime,
+  required int driverID,
+}) async {
+  final res = await http.post(
+    Uri.parse('$_baseUrl/company/createSlot'),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "ZoneID": zoneID,
+      "DayOfWeek": dayOfWeek,
+      "StartTime": startTime,
+      "EndTime": endTime,
+      "DriverID": driverID
+    }),
+  );
+
+  if (res.statusCode != 200) {
+    throw Exception(jsonDecode(res.body)["message"]);
+  }
+}
+static Future<List> getSchedules() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final raw = prefs.get("CompanyID");
+
+  if (raw == null) {
+    throw Exception("CompanyID not found in SharedPreferences");
+  }
+
+  int companyId = int.parse(raw.toString());
+
+  final url = Uri.parse(
+    "$_baseUrl/company/getCompanySchedule?CompanyID=$companyId"
+  );
+
+  final res = await http.get(
+    url,
+    headers: {"Content-Type": "application/json"},
+  );
+
+  print("STATUS: ${res.statusCode}");
+  print("BODY: ${res.body}");
+
+  if (res.statusCode == 200) {
+    return jsonDecode(res.body);
+  } else {
+    throw Exception("Failed to load schedules: ${res.body}");
+  }
+}
 }

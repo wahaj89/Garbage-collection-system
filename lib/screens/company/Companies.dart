@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:garbage_collection_system/Api/companyController.dart';
 import 'package:garbage_collection_system/Api/userController.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
 import 'package:garbage_collection_system/screens/company/company_services.dart';
-
 import 'package:garbage_collection_system/screens/company/viewPlans.dart';
 
 class Viewcompanyservices extends StatefulWidget {
@@ -21,22 +19,24 @@ class _ViewcompanyservicesState extends State<Viewcompanyservices> {
   @override
   void initState() {
     super.initState();
-    fetchCompany();
+    fetchCompanyByLocation(); // 🔥 UPDATED
   }
 
-  Future<void> fetchCompany() async {
+  // 🔥 NOW USING LOCATION-BASED API
+  Future<void> fetchCompanyByLocation() async {
     try {
       setState(() {
         isLoading = true;
         error = '';
       });
 
-      final result = await CompanyApi().fetchCompanies();
+      final result = await UserApi().getCompaniesByLocation();
 
       setState(() {
         companies = result;
         isLoading = false;
       });
+
     } catch (e) {
       setState(() {
         error = e.toString();
@@ -49,15 +49,28 @@ class _ViewcompanyservicesState extends State<Viewcompanyservices> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Companies'),
+        title: const Text('Available Companies'),
         backgroundColor: const Color(0xFF99C13D),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
+
           : error.isNotEmpty
-              ? Center(child: Text(error))
+              ? Center(
+                  child: Text(
+                    error,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                )
+
               : companies.isEmpty
-                  ? const Center(child: Text('No companies found'))
+                  ? const Center(
+                      child: Text(
+                        'No companies available in your area 😔',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    )
+
                   : ListView.builder(
                       padding: const EdgeInsets.all(12),
                       itemCount: companies.length,
@@ -67,17 +80,15 @@ class _ViewcompanyservicesState extends State<Viewcompanyservices> {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: CustomCard(
-                            title: company['Name'],
-                            subtitle: company['Email'],
+                            title: company['Name'] ?? 'No Name',
+                            subtitle: company['Description'] ?? 'No Description',
                             icon: Icons.business,
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => CompanyServices(
-  
-                                    companyId: company['CompanyID'],
-                                    companyName:company['CompanyName'],
+                                  builder: (_) => ViewPlans(companyId:  
+                                  company['CompanyID'],
                                   ),
                                 ),
                               );

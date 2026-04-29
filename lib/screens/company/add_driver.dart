@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:garbage_collection_system/Api/CompanyController.dart';
 import 'package:garbage_collection_system/custom_widgets/button.dart';
 import 'package:garbage_collection_system/custom_widgets/inputfield.dart';
 
@@ -15,31 +16,86 @@ class _AddDriverState extends State<AddDriver> {
   TextEditingController fullNameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   TextEditingController licenseController = TextEditingController();
-  TextEditingController vehicleIdController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
   bool isSubmitting = false;
 
+  List vehicles = [];
+  int? selectedVehicleId;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchVehicles();
+  }
+
+  /// 🔹 Fetch Vehicles from API
+  Future<void> fetchVehicles() async {
+    try {
+      final data = await CompanyApi.getCompanyVehicles();
+         print(data);
+      setState(() {
+        vehicles = data;
+      });
+    } catch (e) {
+      print("Error fetching vehicles: $e");
+    }
+  }
+
+  /// 🔹 Submit Form
   Future<void> submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (selectedVehicleId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a vehicle"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => isSubmitting = true);
 
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final success = await CompanyApi.addDriver(
+        fullName: fullNameController.text,
+        phone: phoneController.text,
+        license: licenseController.text,
+        vehicleId: selectedVehicleId!,
+        password: passwordController.text,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Driver Added Successfully"),
-        backgroundColor: Colors.green,
-      ),
-    );
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Driver Added Successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        fullNameController.clear();
+        phoneController.clear();
+        licenseController.clear();
+        passwordController.clear();
+
+        setState(() {
+          selectedVehicleId = null;
+        });
+      } else {
+        throw Exception("Failed");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
 
     setState(() => isSubmitting = false);
-
-    fullNameController.clear();
-    phoneController.clear();
-    licenseController.clear();
-    vehicleIdController.clear();
   }
 
   @override
@@ -131,26 +187,46 @@ class _AddDriverState extends State<AddDriver> {
 
                   const SizedBox(height: 20),
 
-                  /// 🔹 Vehicle ID
+                  /// 🔹 Vehicle Dropdown
                   SizedBox(
                     width: 370,
-                    child: CustomInput(
-                      label: "Vehicle ID",
-                      controller: vehicleIdController,
-                      keyboardType: TextInputType.number,
-                      suffixIcon: const Icon(Icons.local_shipping),
+                    child: DropdownButtonFormField<int>(
+                      value: selectedVehicleId,
+                      decoration: InputDecoration(
+                        labelText: "Select Vehicle",
+                        filled: true,
+                        fillColor: const Color(0xFFD0E5FF),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        suffixIcon: const Icon(Icons.local_shipping),
+                      ),
+                      items: vehicles.map<DropdownMenuItem<int>>((vehicle) {
+                        return DropdownMenuItem<int>(
+                          value: vehicle['VehicleID'],
+                          child: Text(
+                            "${vehicle['PlateNumber']} (${vehicle['Model']})",
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedVehicleId = value;
+                        });
+                      },
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Vehicle ID required";
+                        if (value == null) {
+                          return "Please select a vehicle";
                         }
                         return null;
                       },
                     ),
                   ),
-                 
- const SizedBox(height: 20),
 
-                SizedBox(
+                  const SizedBox(height: 20),
+
+                  /// 🔹 Password
+                  SizedBox(
                     width: 370,
                     child: CustomInput(
                       label: "Password",
@@ -165,6 +241,7 @@ class _AddDriverState extends State<AddDriver> {
                       },
                     ),
                   ),
+
                   const SizedBox(height: 25),
 
                   isSubmitting

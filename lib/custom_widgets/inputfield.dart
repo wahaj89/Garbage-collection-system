@@ -9,6 +9,7 @@ class CustomInput extends StatelessWidget {
   final Widget? suffixIcon;
   final CustomButton? button; // 👈 make nullable
   final String? Function(String?)? validator;
+  final bool? readOnly; // 👈 new property
 
   const CustomInput({
     super.key,
@@ -18,7 +19,7 @@ class CustomInput extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.button,
-    this.validator, 
+    this.validator, this.readOnly, 
   });
 
   @override

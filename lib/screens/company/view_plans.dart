@@ -1,9 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/CompanyController.dart';
-import 'package:garbage_collection_system/Api/userController.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
-
 
 class ViewPlans extends StatefulWidget {
   const ViewPlans({super.key});
@@ -24,7 +21,10 @@ class _ViewPlansState extends State<ViewPlans> {
 
   Future<void> fetchPlans() async {
     try {
-      final data = await CompanyApi().viewPlans(); // API call
+      final data = await CompanyApi().viewPlans();
+
+      print("API DATA: $data"); // 👈 debug
+
       setState(() {
         plans = data;
         isLoading = false;
@@ -36,6 +36,8 @@ class _ViewPlansState extends State<ViewPlans> {
       });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -59,21 +61,26 @@ class _ViewPlansState extends State<ViewPlans> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: CustomCard(
-                          title: plan["planName"] ?? "Plan",
-                          subtitle: "Rs ${plan["price"]}",
+                          title: plan["Name"] ?? "Plan",
+                          subtitle: "Rs ${plan["MonthlyPrice"]}",
                           icon: Icons.recycling,
-                          onTap: () {
-                            print("Selected Plan: ${plan["planId"]}");
+                          onTap: (){
+                            
                           },
                           extraWidget: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 8),
+
                               Text(
-                                "Bags/Day: ${plan["bagsPerDay"]}",
+                                "📦 Bags/Day: ${plan["BagsPerDay"]}",
                                 style: const TextStyle(fontSize: 13),
                               ),
+
+                              const SizedBox(height: 4),
+
                               Text(
-                                "Service Days: ${plan["serviceDays"]}",
+                                "📝 ${plan["Description"] ?? ""}",
                                 style: const TextStyle(fontSize: 13),
                               ),
                             ],

@@ -4,6 +4,7 @@ class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
   final IconData? icon; 
+  final Color? backgroundColor;
   
 
   const CustomButton({
@@ -11,6 +12,8 @@ class CustomButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.icon, 
+    this.backgroundColor,
+
   });
 
   @override
@@ -18,7 +21,7 @@ class CustomButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF99C13D),
+        backgroundColor: backgroundColor ?? const Color(0xFF99C13D),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),

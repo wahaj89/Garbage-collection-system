@@ -54,11 +54,11 @@ class _CompanydashboardState extends State<Companydashboard> {
               buildRow(
                 context,
                 CustomCard(
-                  title: "Generate QR Code",
+                  title: "View Extra Pickup Requests",
                   subtitle: '',
                   icon: Icons.qr_code,
                   onTap: () {
-                    Navigator.pushNamed(context, '/generateQRCode');
+                    Navigator.pushNamed(context, '/viewExtraPickupRequests');
                   },
                 ),
                 CustomCard(

@@ -76,7 +76,11 @@ Future<void> loadCompanyName() async {
                   title: "Manage  Complaints",
                   subtitle: "Manage all Complaints",
                   icon: Icons.report_problem_outlined,
-                  onTap: () {},
+                  onTap: () {
+                      
+                    Navigator.pushNamed(context, '/viewComplaints');
+            
+                  },
                 ),
               ),
           
@@ -90,7 +94,9 @@ Future<void> loadCompanyName() async {
                   title: "Manage Schedules",
                   subtitle: "Manage all Schedules",
                   icon: Icons.schedule_outlined,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushNamed(context, '/manageSchedules');
+                  },
                 ),
               ),
                  const SizedBox(height: 15),

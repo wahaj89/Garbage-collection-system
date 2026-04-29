@@ -125,6 +125,7 @@ class _AddZoneState extends State<AddZone> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor:  const Color(0xFF99C13D),
         title: const Text("Add Zone"),
         actions: [
           IconButton(
@@ -184,7 +185,7 @@ class _AddZoneState extends State<AddZone> {
 
       floatingActionButton: FloatingActionButton(
         onPressed: saveZone,
-        child: const Icon(Icons.save),
+        child: const Icon(Icons.add),
       ),
     );
   }
