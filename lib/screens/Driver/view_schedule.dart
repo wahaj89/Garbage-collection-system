@@ -35,19 +35,49 @@ class _ViewScheduleState extends State<ViewSchedule> {
     }
   }
 
-  // ✅ FIX: clean time formatting
-  String formatTime(String? time) {
-    if (time == null || time.isEmpty) return "N/A";
+String formatTime(dynamic raw) {
+  if (raw == null) return 'N/A';
 
-    try {
-      DateTime dt = DateTime.parse(time).toLocal();
-      String hour = dt.hour.toString().padLeft(2, '0');
-      String min = dt.minute.toString().padLeft(2, '0');
-      return "$hour:$min";
-    } catch (e) {
-      return "Invalid Time";
+  try {
+    String value = raw.toString();
+
+    int hour = 0;
+    int minute = 0;
+
+    // ✅ Case 1: ISO format (1970-01-01T06:00:00.000Z)
+    if (value.contains('T')) {
+      final dt = DateTime.parse(value).toLocal();
+      hour = dt.hour;
+      minute = dt.minute;
+    } 
+    // ✅ Case 2: Normal time (06:00:00.0000000)
+    else {
+      final cleaned = value.split('.')[0]; // remove nanoseconds
+      final parts = cleaned.split(':');
+
+      if (parts.length < 2) return value;
+
+      hour = int.tryParse(parts[0]) ?? 0;
+      minute = int.tryParse(parts[1]) ?? 0;
     }
+
+    // ✅ Convert to 12-hour format
+    final period = hour >= 12 ? 'PM' : 'AM';
+
+    if (hour == 0) {
+      hour = 12;
+    } else if (hour > 12) {
+      hour -= 12;
+    }
+
+    final minStr = minute.toString().padLeft(2, '0');
+
+    return '$hour:$minStr $period';
+  } catch (e) {
+    print("Time error: $e");
+    return raw.toString();
   }
+}
 
   // ✅ safe text
   String safe(value) => (value == null || value.toString().isEmpty)
@@ -59,6 +89,7 @@ class _ViewScheduleState extends State<ViewSchedule> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Today's Schedule"),
+         backgroundColor: const Color(0xFF99C13D)
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

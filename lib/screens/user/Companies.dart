@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/userController.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
-import 'package:garbage_collection_system/screens/company/company_services.dart';
-import 'package:garbage_collection_system/screens/company/viewPlans.dart';
+import 'package:garbage_collection_system/screens/user/viewPlans.dart';
 
 class Viewcompanyservices extends StatefulWidget {
   const Viewcompanyservices({super.key});

@@ -4,21 +4,26 @@ import 'package:garbage_collection_system/custom_widgets/inputfield.dart';
 import 'package:garbage_collection_system/custom_widgets/button.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-class GenerateBagsScreen extends StatefulWidget {
-  const GenerateBagsScreen({super.key});
+class GenerateQrcode extends StatefulWidget {
+  final int userId;
+  final int bags;
+  final String bagType;
+
+  const GenerateQrcode({
+    super.key,
+    required this.userId,
+    required this.bags,
+    required this.bagType,
+  });
 
   @override
-  State<GenerateBagsScreen> createState() => _GenerateBagsScreenState();
+  State<GenerateQrcode> createState() => _GenerateQrcodeState();
 }
 
-class _GenerateBagsScreenState extends State<GenerateBagsScreen> {
+class _GenerateQrcodeState extends State<GenerateQrcode> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController userIdController = TextEditingController();
-  final TextEditingController quantityController = TextEditingController();
   final TextEditingController weightController = TextEditingController();
-
-  String bagType = "Recyclable";
 
   List<String> generatedQRs = [];
   bool isLoading = false;
@@ -31,14 +36,12 @@ class _GenerateBagsScreenState extends State<GenerateBagsScreen> {
       generatedQRs.clear();
     });
 
-    final userId = int.parse(userIdController.text.trim());
-    final quantity = int.parse(quantityController.text.trim());
     final weight = double.parse(weightController.text.trim());
 
     final result = await CompanyApi.generateBags(
-      userId: userId,
-      quantity: quantity,
-      bagType: bagType,
+      userId: widget.userId,      // ✅ auto
+      quantity: widget.bags,      // ✅ auto
+      bagType: widget.bagType,   // ✅ auto
       weightLimit: weight,
     );
 
@@ -71,61 +74,29 @@ class _GenerateBagsScreenState extends State<GenerateBagsScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            // ✅ Info Card (auto values show karne ke liye)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD0E5FF),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  Text("User ID: ${widget.userId}"),
+                  Text("Bags: ${widget.bags}"),
+                  Text("Type: ${widget.bagType}"),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ✅ Only Weight Input
             Form(
               key: _formKey,
               child: Column(
                 children: [
-                  CustomInput(
-                    label: "User ID",
-                    controller: userIdController,
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Enter User ID";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  CustomInput(
-                    label: "Quantity of Bags",
-                    controller: quantityController,
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Enter Quantity";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  DropdownButtonFormField(
-                    value: bagType,
-                    items: const [
-                      DropdownMenuItem(
-                        value: "Recyclable",
-                        child: Text("Recyclable"),
-                      ),
-                      DropdownMenuItem(
-                        value: "Non-Recyclable",
-                        child: Text("Non-Recyclable"),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        bagType = value!;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      labelText: "Bag Type",
-                      filled: true,
-                      fillColor: const Color(0xFFD0E5FF),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
                   CustomInput(
                     label: "Weight Limit",
                     controller: weightController,
@@ -138,6 +109,7 @@ class _GenerateBagsScreenState extends State<GenerateBagsScreen> {
                     },
                   ),
                   const SizedBox(height: 25),
+
                   isLoading
                       ? const CircularProgressIndicator()
                       : CustomButton(
@@ -147,7 +119,10 @@ class _GenerateBagsScreenState extends State<GenerateBagsScreen> {
                 ],
               ),
             ),
+
             const SizedBox(height: 20),
+
+            // ✅ QR LIST
             Expanded(
               child: generatedQRs.isEmpty
                   ? const Center(child: Text("No QR codes generated yet"))
@@ -155,12 +130,12 @@ class _GenerateBagsScreenState extends State<GenerateBagsScreen> {
                       itemCount: generatedQRs.length,
                       itemBuilder: (context, index) {
                         final qrData = generatedQRs[index];
+
                         return Card(
                           margin: const EdgeInsets.symmetric(vertical: 8),
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Text(
                                   "QR Code ${index + 1}",
@@ -168,13 +143,14 @@ class _GenerateBagsScreenState extends State<GenerateBagsScreen> {
                                       fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 10),
+
                                 QrImageView(
                                   data: qrData,
                                   version: QrVersions.auto,
                                   size: 200,
-                                  gapless: false,
                                   backgroundColor: const Color(0xFFD0E5FF),
                                 ),
+
                                 const SizedBox(height: 10),
                                 SelectableText(qrData),
                               ],

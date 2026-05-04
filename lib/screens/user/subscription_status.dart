@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/userController.dart';
 import 'package:garbage_collection_system/custom_widgets/button.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
+import 'package:garbage_collection_system/screens/user/viewPlans.dart';
 
 class SubscriptionStatus extends StatefulWidget {
   const SubscriptionStatus({super.key});
@@ -159,8 +160,8 @@ class _SubscriptionStatusState extends State<SubscriptionStatus> {
                         icon: Icons.swap_horiz,
                         onPressed: () {
                           // 👉 Navigate to plans screen
-                          // Navigator.push(context, MaterialPageRoute(builder: (_) => ViewPlans()));
-                          print("Navigate to plans");
+                            Navigator.pushNamed(context, '/viewcompanies');
+                      
                         },
                       ),
                     ],

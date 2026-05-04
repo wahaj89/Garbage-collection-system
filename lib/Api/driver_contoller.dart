@@ -11,37 +11,6 @@ class DriverApi {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('id');
   }
-
-  Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-  Future<http.Response> fetchDrivers() async {
-    final url = Uri.parse("$_baseUrl/drivers/viewCompanyDrivers");
-    String? token = await getToken();
-    if (token == null) {
-      print(token);
-      return Future.error('No token found');
-    }
-
-    var res = await http.get(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (res.statusCode == 200) {
-      print(res.body);
-      return res;
-    } else {
-      throw HttpException('Failed to load drivers: ${res.body}');
-    }
-  }
-
   // driver login
   static Future<Map<String, dynamic>> loginDriver(
     String phone,
@@ -110,4 +79,24 @@ class DriverApi {
       throw Exception("Failed to load data");
     }
   }
+  // update driver location
+  static Future<void> updateDriverLocation({
+  required double lat,
+  required double lng,
+}) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final driverId = prefs.getInt('UserId') ?? 0;
+    await http.post(
+      Uri.parse("$_baseUrl/drivers/updateLocation?DriverID=$driverId"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "Latitude": lat,
+        "Longitude": lng,
+      }),
+    );
+  } catch (e) {
+    print("Location update failed: $e");
+  }
+}
 }

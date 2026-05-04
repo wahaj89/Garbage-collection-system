@@ -12,8 +12,13 @@ class _ViewschedulesState extends State<Viewschedules> {
   List schedules = [];
   bool loading = true;
 
-  List zones = [];
-  List vehicles = [];
+  // Columns = Days of week (fixed order)
+  final List<String> days = [
+    "Monday", "Tuesday", "Wednesday",
+    "Thursday", "Friday", "Saturday", "Sunday"
+  ];
+
+  List<String> zones = [];
 
   @override
   void initState() {
@@ -24,13 +29,10 @@ class _ViewschedulesState extends State<Viewschedules> {
   Future<void> loadSchedules() async {
     try {
       final data = await CompanyApi.getSchedules();
-
-      print("API DATA: $data"); // 🔥 DEBUG
-
-      schedules = data;
-      extractData();
-
+      print("API DATA: $data");
       setState(() {
+        schedules = data;
+        zones = _extractZones(data);
         loading = false;
       });
     } catch (e) {
@@ -39,59 +41,52 @@ class _ViewschedulesState extends State<Viewschedules> {
     }
   }
 
-  // 🔥 Extract Zones & Vehicles
-  void extractData() {
+  // ✅ Unique zones extract karo (ZoneName use karo)
+  List<String> _extractZones(List data) {
     final zSet = <String>{};
-    final vSet = <String>{};
-
-    for (var s in schedules) {
-      if (s['Name'] != null) zSet.add(s['Name']);
-      if (s['PlateNumber'] != null) vSet.add(s['PlateNumber']);
+    for (var s in data) {
+      if (s['ZoneName'] != null) zSet.add(s['ZoneName']);
     }
-
-    zones = zSet.toList();
-    vehicles = vSet.toList();
+    return zSet.toList()..sort();
   }
 
-  // 🔥 FIXED TIME FORMAT FUNCTION
+  // ✅ Zone + Day ke liye SAARE schedules laao (multiple drivers ho sakty hain)
+  List<Map> _getSlots(String zone, String day) {
+    return schedules.where((s) {
+      return s['ZoneName'] == zone && s['DayOfWeek'] == day;
+    }).toList().cast<Map>();
+  }
+
+  // ✅ Time format
   String formatTime(dynamic time) {
     if (time == null) return "";
-
     try {
-      DateTime dt = DateTime.parse(time.toString()).toLocal(); // 🔥 FIX
+      // "HH:mm:ss" ya DateTime string dono handle karo
+      DateTime dt;
+      final str = time.toString();
+
+      if (str.contains("T") || str.contains("-")) {
+        dt = DateTime.parse(str).toLocal();
+      } else {
+        // "08:00:00" format
+        final parts = str.split(":");
+        final now = DateTime.now();
+        dt = DateTime(now.year, now.month, now.day,
+            int.parse(parts[0]), int.parse(parts[1]));
+      }
 
       int hour = dt.hour;
       int minute = dt.minute;
-
       if (hour == 0 && minute == 0) return "";
 
       String period = hour >= 12 ? "PM" : "AM";
-
       hour = hour % 12;
       if (hour == 0) hour = 12;
-
       return "$hour:${minute.toString().padLeft(2, '0')} $period";
     } catch (e) {
-      print("Time parse error: $e");
-      return "";
+      print("Time parse error: $e for value: $time");
+      return time.toString();
     }
-  }
-
-  // 🔥 Get Time for each cell
-  String getTime(String zone, String vehicle) {
-    for (var s in schedules) {
-      if (s['Name'] == zone && s['PlateNumber'] == vehicle) {
-        print("MATCH FOUND: $s"); // 🔥 DEBUG
-
-        final start = formatTime(s['StartTime']);
-        final end = formatTime(s['EndTime']);
-
-        if (start.isEmpty && end.isEmpty) return "";
-
-        return "$start - $end";
-      }
-    }
-    return "";
   }
 
   @override
@@ -106,102 +101,142 @@ class _ViewschedulesState extends State<Viewschedules> {
           ? const Center(child: CircularProgressIndicator())
           : schedules.isEmpty
               ? const Center(child: Text("No schedules found"))
-              : Center(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 30),
+              : Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Weekly Schedule",
+                      style: TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
 
-                      const Text(
-                        "Weekly  Schedule",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.blue, width: 3),
-                          borderRadius: BorderRadius.circular(15),
-                          color: Colors.white,
-                        ),
+                    // ✅ Scroll both horizontally and vertically
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
-                          child: Table(
-                            defaultColumnWidth:
-                                const FixedColumnWidth(110),
-
-                            children: [
-                              // 🔥 HEADER ROW
-                              TableRow(
-                                children: [
-                                  buildHeaderCell("Zones"),
-                                  ...vehicles
-                                      .map((v) => buildHeaderCell(v)),
-                                ],
-                              ),
-
-                              // 🔥 DATA ROWS
-                              ...zones.map((zone) {
-                                return TableRow(
+                          padding: const EdgeInsets.all(12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: const Color(0xFF99C13D), width: 2),
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.white,
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: Table(
+                              defaultColumnWidth:
+                                  const FixedColumnWidth(120),
+                              border: TableBorder.all(
+                                  color: Colors.grey.shade300, width: 1),
+                              children: [
+                                // ✅ Header Row — Days
+                                TableRow(
+                                  decoration: BoxDecoration(
+                                      color: const Color(0xFF99C13D)
+                                          .withOpacity(0.2)),
                                   children: [
-                                    buildHeaderCell(zone),
-
-                                    ...vehicles.map((vehicle) {
-                                      final time =
-                                          getTime(zone, vehicle);
-                                      return buildCell(time);
-                                    }).toList(),
+                                    buildHeaderCell("Zone"),
+                                    ...days.map(
+                                        (d) => buildHeaderCell(d)),
                                   ],
-                                );
-                              }).toList(),
-                            ],
+                                ),
+
+                                // ✅ Data Rows — Zone × Day
+                                ...zones.map((zone) {
+                                  return TableRow(
+                                    children: [
+                                      buildHeaderCell(zone),
+                                      ...days.map((day) {
+                                        final slots =
+                                            _getSlots(zone, day);
+                                        return buildCell(slots);
+                                      }).toList(),
+                                    ],
+                                  );
+                                }).toList(),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    const SizedBox(height: 12),
+                  ],
                 ),
     );
   }
 
-  // 🔥 Header Cell
   Widget buildHeaderCell(String text) {
     return Container(
-      height: 55,
+      height: 50,
       alignment: Alignment.center,
-      margin: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade100,
-        borderRadius: BorderRadius.circular(6),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+        style: const TextStyle(
+            fontWeight: FontWeight.bold, fontSize: 13),
       ),
     );
   }
 
-  // 🔥 Normal Cell
-  Widget buildCell(String text) {
+  // ✅ Ek cell mein multiple drivers show karo
+  Widget buildCell(List<Map> slots) {
+    if (slots.isEmpty) {
+      return Container(
+        height: 55,
+        alignment: Alignment.center,
+        color: Colors.grey.shade50,
+        child: const Text("-",
+            style: TextStyle(color: Colors.grey)),
+      );
+    }
+
     return Container(
-      height: 55,
-      alignment: Alignment.center,
-      margin: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: text.isNotEmpty
-            ? Colors.green.shade200
-            : Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.w500),
+      padding: const EdgeInsets.all(4),
+      color: Colors.green.shade50,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: slots.map((slot) {
+          final start = formatTime(slot['StartTime']);
+          final end = formatTime(slot['EndTime']);
+          final driver = slot['DriverName'] ?? '';
+          final plate = slot['PlateNumber'] ?? '';
+
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.green.shade200,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  "$start - $end",
+                  style: const TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  driver,
+                  style: const TextStyle(fontSize: 10),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  plate,
+                  style: TextStyle(
+                      fontSize: 10, color: Colors.grey.shade700),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }

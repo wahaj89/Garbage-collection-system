@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/CompanyController.dart';
 import 'package:garbage_collection_system/custom_widgets/button.dart';
 import 'package:garbage_collection_system/custom_widgets/inputfield.dart';
-import 'package:garbage_collection_system/screens/company/CompanyDashBoard.dart';
+
 import 'package:garbage_collection_system/screens/company/companyLogin.dart';
 
 class Addcompany extends StatefulWidget {

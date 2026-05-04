@@ -14,7 +14,7 @@ import 'package:garbage_collection_system/screens/company/companyDashBoard.dart'
 import 'package:garbage_collection_system/screens/company/generate_qrcode.dart';
 import 'package:garbage_collection_system/screens/company/manage_driver_vehicles.dart';
 import 'package:garbage_collection_system/screens/company/manage_plans.dart';
-import 'package:garbage_collection_system/screens/company/Companies.dart';
+import 'package:garbage_collection_system/screens/user/Companies.dart';
 import 'package:garbage_collection_system/screens/company/company_dashboard1.dart';
 import 'package:garbage_collection_system/screens/company/manage_schedules.dart';
 import 'package:garbage_collection_system/screens/company/manage_zones.dart';
@@ -33,10 +33,12 @@ import 'package:garbage_collection_system/screens/user/extra_pickups.dart';
 import 'package:garbage_collection_system/screens/user/fileacomplaint.dart';
 import 'package:garbage_collection_system/screens/user/profile.dart';
 import 'package:garbage_collection_system/screens/user/subscription_status.dart';
+import 'package:garbage_collection_system/screens/user/view_driver_location.dart';
 import 'package:garbage_collection_system/screens/user/view_history.dart';
+import 'package:garbage_collection_system/screens/company/companyLogin.dart';
 
 import 'screens/splash/splash.dart';
-import 'screens/auth/loginscreen.dart';
+import 'screens/auth/loginscreen.dart' hide Loginscreen;
 import 'screens/auth/signupscreen.dart';
 import 'screens/User/newuserdashboard.dart';
 
@@ -54,10 +56,10 @@ class MyApp extends StatelessWidget {
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const Splash(),
-        '/login': (context) => const Loginscreen(),
+        '/login': (context) => const LoginScreen(),
         '/signup': (context) => const Signupscreen(),
         '/newUserDashboard': (context) => const Newuserdashboard(),
-        '/addcompany': (context) => Addcompany(),
+        '/addCompany': (context) => Addcompany(),
         '/viewcompanies': (context) => const Viewcompanyservices(),
         '/splash2': (context) => const Splash2(),
         '/companyAdminDashboard': (context) => const Companydashboard(),
@@ -68,7 +70,6 @@ class MyApp extends StatelessWidget {
         '/addPlan': (context) => const Addplan(),
         '/companyDashboard': (context) => const CompanyDashboard1(),
         '/managePlans': (context) => const Companydashboard(),
-        '/generateQRCode': (context) => const GenerateBagsScreen(),
         '/viewPlans': (context) => const ViewPlans(),
         '/managezones': (context) => const ManageZones(),
         '/addzone': (context) => const AddZone(),
@@ -92,6 +93,8 @@ class MyApp extends StatelessWidget {
         '/collectorDashboard':(context)=> const CollectorDashboard(),
         '/scanQR':(context)=> const ScanQr(),
         '/pickupPoints':(context)=> const PickupPoints(),
+        '/trackPickup':(context)=> const ViewDriverLocation(),
+        '/loginCompany':(context)=> const Loginscreen()
       },
     );
   }

@@ -33,7 +33,7 @@ class _SplashState extends State<Splash2> {
                 child: CustomButton(
                   text: "Start as User",
                   onPressed: () {
-                    Navigator.pushNamed(context, '/signup');
+                    Navigator.pushNamed(context, '/login');
                   },
                 ),
               ),
@@ -44,7 +44,7 @@ class _SplashState extends State<Splash2> {
                 child: CustomButton(
                   text: "Start as Company",
                   onPressed: () {
-                    Navigator.pushNamed(context, '/addcompany');
+                    Navigator.pushNamed(context, '/loginCompany');
                   },
                 ),
               ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/CompanyController.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
-import 'package:garbage_collection_system/screens/company/generatebag_screen.dart';
+import 'package:garbage_collection_system/screens/company/generate_qrcode.dart';
+
 
 class ViewSubscribers extends StatefulWidget {
   const ViewSubscribers({super.key});
@@ -101,7 +102,7 @@ class _ViewSubscribersState extends State<ViewSubscribers> {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => GeneratebagScreen(
+      builder: (_) => GenerateQrcode(
         userId: userId,
         bags: bags,
         bagType: bagType, // 👈 PASS HERE

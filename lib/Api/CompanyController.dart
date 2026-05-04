@@ -285,6 +285,46 @@ Future<List<dynamic>> viewPlans() async {
       };
     }
   }
+
+ static Future<Map<String, dynamic>> generateBags1({
+    required int userId,
+    required int quantity,
+    required String bagType,
+    required double weightLimit,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    int? companyId = prefs.getInt('CompanyID');
+
+    if (companyId == null) {
+      return {"error": "CompanyID not found"};
+    }
+
+    final url = Uri.parse("$_baseUrl/bags/extra");
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: jsonEncode({
+        "UserID": userId,
+        "CompanyID": companyId,
+        "Quantity": quantity,
+        "BagType": bagType,
+        "WeightLimit": weightLimit,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      return {
+        "error": "Failed to generate bags: ${response.body}",
+      };
+    }
+  }
+
   // fetch subscribers
   Future<Map<String, dynamic>> fetchSubscribers() async {
   final prefs = await SharedPreferences.getInstance();
@@ -354,6 +394,7 @@ Future<List<dynamic>> viewPlans() async {
     };
   }
 }
+
 //add driver
  static Future<bool> addDriver({
     required String fullName,
@@ -361,6 +402,8 @@ Future<List<dynamic>> viewPlans() async {
     required String license,
     required int vehicleId,
     required String password,
+    required int collectorId,
+   
   }) async {
     final prefs = await SharedPreferences.getInstance();
     int? companyId = prefs.getInt('CompanyID');
@@ -376,8 +419,10 @@ Future<List<dynamic>> viewPlans() async {
         "LicenseNumber": license,
         "VehicleID": vehicleId,
         "Password": password,
+        "CollectorID": collectorId,
       }),
-    );
+    ); 
+      print("ADD DRIVER RESPONSE: ${response.body}");
 
     return response.statusCode == 201;
   }
@@ -474,10 +519,12 @@ Future<List<dynamic>> viewPlans() async {
     }),
   );
 
+
   if (res.statusCode != 200) {
     throw Exception(jsonDecode(res.body)["message"]);
   }
 }
+//view schedules
 static Future<List> getSchedules() async {
   final prefs = await SharedPreferences.getInstance();
 
@@ -505,6 +552,58 @@ static Future<List> getSchedules() async {
     return jsonDecode(res.body);
   } else {
     throw Exception("Failed to load schedules: ${res.body}");
+  }
+}
+
+
+//view drivers
+ Future<http.Response> fetchDrivers() async {
+    final url = Uri.parse("$_baseUrl/drivers/viewCompanyDrivers");
+    String? token = await getToken();
+    if (token == null) {
+      print(token);
+      return Future.error('No token found');
+    }
+
+    var res = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (res.statusCode == 200) {
+      print(res.body);
+      return res;
+    } else {
+      throw HttpException('Failed to load drivers: ${res.body}');
+    }
+  }
+//get collector
+Future<List<dynamic>> getCompanyCollectors() async {
+  final prefs = await SharedPreferences.getInstance();
+  final companyId = prefs.getInt('CompanyID') ?? 0;
+  try {
+    final response = await http.get(
+      Uri.parse("$_baseUrl/collector/viewCollector?CompanyID=$companyId"),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      if (data is List) {
+        return data; // 🔥 direct list case
+      } else {
+        return data['collectors'] ?? [];
+      }
+    }
+
+    return [];  
+  } catch (e) {
+    print("Error fetching collectors: $e");
+    return [];
   }
 }
 }

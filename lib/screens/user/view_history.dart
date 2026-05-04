@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/userController.dart';
+import 'package:garbage_collection_system/custom_widgets/card.dart';
+// update path as needed
 
 class ViewHistory extends StatefulWidget {
   const ViewHistory({super.key});
@@ -21,7 +23,6 @@ class _ViewHistoryState extends State<ViewHistory> {
   Future<void> loadPickups() async {
     try {
       final data = await UserApi().getPastPickups();
-
       setState(() {
         pickups = data;
         isLoading = false;
@@ -34,52 +35,88 @@ class _ViewHistoryState extends State<ViewHistory> {
     }
   }
 
-  Widget buildCard(item) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFD0E5FF),
-            Color(0xFFD0E5FF),
+  Widget _buildPickupCard(item) {
+    final status = item['Status'] ?? 'Unknown';
+    final isCompleted = status.toString().toLowerCase() == 'completed';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      child: CustomCard(
+        icon: Icons.delete_outline,
+        title: item['CollectorName'] ?? 'N/A',
+        subtitle: item['BagType'] ?? 'N/A',
+        onTap: () {},
+        extraWidget: Column(
+          children: [
+            const Divider(height: 20, color: Colors.black12),
+
+            // Status badge
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? const Color(0xFF99C13D)
+                      : const Color(0xFFE0A800),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Bag ID
+            Row(
+              children: [
+                const Icon(Icons.tag, size: 16, color: Colors.black45),
+                const SizedBox(width: 6),
+                Text(
+                  "Bag ID: ${item['BagID']}",
+                  style: const TextStyle(color: Colors.black54),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            // Phone
+            Row(
+              children: [
+                const Icon(Icons.phone_outlined, size: 16, color: Colors.black45),
+                const SizedBox(width: 6),
+                Text(
+                  item['CollectorPhone'] ?? 'N/A',
+                  style: const TextStyle(color: Colors.black54),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            // Date
+            Row(
+              children: [
+                const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.black45),
+                const SizedBox(width: 6),
+                Text(
+                  item['ScannedAt'] != null
+                      ? item['ScannedAt'].toString().split('T').first
+                      : 'N/A',
+                  style: const TextStyle(color: Colors.black54),
+                ),
+              ],
+            ),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Driver: ${item['DriverName'] ?? 'N/A'}",
-            style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-
-          Text(
-            "Bag ID: ${item['BagID']}",
-            style: const TextStyle(color: Colors.black45),
-          ),
-
-          Text(
-            "Vehicle ID: ${item['VehicleID']}",
-            style: const TextStyle(color: Colors.black45),
-          ),
-
-          Text(
-            "Date: ${item['ScannedAt']}",
-            style: const TextStyle(color: Colors.black45),
-          ),
-        ],
       ),
     );
   }
@@ -90,6 +127,7 @@ class _ViewHistoryState extends State<ViewHistory> {
       appBar: AppBar(
         title: const Text("Pickup History"),
         backgroundColor: const Color(0xFF99C13D),
+        
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -100,14 +138,13 @@ class _ViewHistoryState extends State<ViewHistory> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 )
-              : Center(
-                child: ListView.builder(
-                    itemCount: pickups.length,
-                    itemBuilder: (context, index) {
-                      return buildCard(pickups[index]);
-                    },
-                  ),
-              ),
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  itemCount: pickups.length,
+                  itemBuilder: (context, index) {
+                    return _buildPickupCard(pickups[index]);
+                  },
+                ),
     );
   }
 }

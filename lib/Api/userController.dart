@@ -24,7 +24,8 @@ class UserApi {
         'Password': password
       }),
     );
-
+  
+  print(response.body);
 
     if (response.statusCode == 200) {
       return response;
@@ -119,24 +120,16 @@ class UserApi {
     }
   }
   //get user details
-  Future<http.Response> fetchUserDetails() async {
-    final url = Uri.parse("$_baseUrl/users/userInfo");
-    final token = await getToken();
-
-    final response = await http.get(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return response;
-    } else {
-      throw HttpException('Failed to fetch user details: ${response.body}');
-    }
+Future<http.Response> fetchUserDetails() async {
+  final token = await getToken();
+  final response = await http.get(
+    Uri.parse("$_baseUrl/users/userInfo"),
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token",
+    },
+  );
+  return response;
 }
 //cancel subscription
 Future<Map<String, dynamic>> cancelSubscription({
@@ -287,5 +280,52 @@ Future<bool> requestExtraPickup({
       throw Exception("Failed to load pickups");
     }
   }
+  //track driver 
+  static Future<Map<String, dynamic>?> getDriverLiveLocation() async {
+  try {
+    final token = await UserApi().getToken();
+    final response = await http.get(
+      Uri.parse("$_baseUrl/users/getDriverLiveLocation"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token", // agar auth use kar rahe ho
+      },
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return data;
+    } else {
+      print("API ERROR: ${data["message"]}");
+      return null;
+    }
+  } catch (e) {
+    print("API EXCEPTION: $e");
+    return null;
+  }
+}
+//get schedule
+Future<Map<String, dynamic>?> getScheduledPickup() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token') ?? '';
+
+  final response = await http.get(
+    Uri.parse('$_baseUrl/users/scheduled-pickup'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data['pickup'];  // ✅ must match backend key exactly
+  }
+
+  // ✅ 404 = no pickup today — return null gracefully, don't throw
+  return null;
+}
+
 }
 

@@ -20,25 +20,42 @@ class _AddDriverState extends State<AddDriver> {
 
   bool isSubmitting = false;
 
+  // ✅ Vehicles
   List vehicles = [];
   int? selectedVehicleId;
+
+  // ✅ Collectors
+  List collectors = [];
+  int? selectedCollectorId;
 
   @override
   void initState() {
     super.initState();
     fetchVehicles();
+    fetchCollectors();
   }
 
-  /// 🔹 Fetch Vehicles from API
+  /// 🔹 Fetch Vehicles
   Future<void> fetchVehicles() async {
     try {
       final data = await CompanyApi.getCompanyVehicles();
-         print(data);
       setState(() {
         vehicles = data;
       });
     } catch (e) {
       print("Error fetching vehicles: $e");
+    }
+  }
+
+  /// 🔹 Fetch Collectors
+  Future<void> fetchCollectors() async {
+    try {
+      final data = await CompanyApi().getCompanyCollectors();
+      setState(() {
+        collectors = data;
+      });
+    } catch (e) {
+      print("Error fetching collectors: $e");
     }
   }
 
@@ -56,6 +73,16 @@ class _AddDriverState extends State<AddDriver> {
       return;
     }
 
+    if (selectedCollectorId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a collector"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => isSubmitting = true);
 
     try {
@@ -64,7 +91,9 @@ class _AddDriverState extends State<AddDriver> {
         phone: phoneController.text,
         license: licenseController.text,
         vehicleId: selectedVehicleId!,
+         // ✅ NEW
         password: passwordController.text,
+        collectorId: selectedCollectorId!,
       );
 
       if (success) {
@@ -82,6 +111,7 @@ class _AddDriverState extends State<AddDriver> {
 
         setState(() {
           selectedVehicleId = null;
+          selectedCollectorId = null;
         });
       } else {
         throw Exception("Failed");
@@ -217,6 +247,44 @@ class _AddDriverState extends State<AddDriver> {
                       validator: (value) {
                         if (value == null) {
                           return "Please select a vehicle";
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  /// 🔹 Collector Dropdown
+                  SizedBox(
+                    width: 370,
+                    child: DropdownButtonFormField<int>(
+                      value: selectedCollectorId,
+                      decoration: InputDecoration(
+                        labelText: "Select Collector",
+                        filled: true,
+                        fillColor: const Color(0xFFD0E5FF),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        suffixIcon: const Icon(Icons.people),
+                      ),
+                      items: collectors.map<DropdownMenuItem<int>>((collector) {
+                        return DropdownMenuItem<int>(
+                          value: collector['CollectorID'],
+                          child: Text(
+                            "${collector['FullName']}",
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedCollectorId = value;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return "Please select a collector";
                         }
                         return null;
                       },

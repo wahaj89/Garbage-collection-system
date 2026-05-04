@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectorApi {
-  static const String baseUrl =    "https://pauseful-raymon-unilluminant.ngrok-free.dev/api"; // 🔥 change this
+  static const String baseUrl ="https://pauseful-raymon-unilluminant.ngrok-free.dev/api"; // 🔥 change this
 
   static Future<Map<String, dynamic>> addCollector({
     required int CompanyID,
@@ -93,37 +93,33 @@ static Future<Map<String, dynamic>> loginCollector(
   }
   //scan
   
-  static Future<Map<String, dynamic>> scanBagAndPickup({
-    required String qrCode,
-    required int driverId,
-    required int collectorId,
-    required int vehicleId,
-    required double latitude,
-    required double longitude,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse("$baseUrl/pickup/Scan"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "QRCode": qrCode,
-          "DriverID": driverId,
-          "CollectorID": collectorId,
-          "VehicleID": vehicleId,
-          "Latitude": latitude,
-          "Longitude": longitude,
-        }),
-      );
+static Future<Map<String, dynamic>> scanBagAndPickup({
+  required String qrCode,
+  required int collectorId,
+  required double latitude,
+  required double longitude,
+}) async {
+  try {
+    final response = await http.post(
+      Uri.parse("$baseUrl/pickup/Scan"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "QRCode": qrCode,
+        "CollectorID": collectorId,
+        "Latitude": latitude,
+        "Longitude": longitude,
+      }),
+    );
 
-      final data = jsonDecode(response.body);
+    final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        return {"success": true, "message": data["message"]};
-      } else {
-        return {"success": false, "message": data["message"]};
-      }
-    } catch (e) {
-      return {"success": false, "message": e.toString()};
-    }
+    return {
+      "success": response.statusCode == 200,
+      "message": data["message"]
+    };
+
+  } catch (e) {
+    return {"success": false, "message": e.toString()};
   }
+}
 }

@@ -15,7 +15,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
   String driverName = "Driver";
   String phone = "";
   String license = "";
- int vehicle =0;
+
 
   @override
   void initState() {
@@ -30,7 +30,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
       driverName = prefs.getString('UserName') ?? "Driver";
       phone = prefs.getString('UserPhone') ?? "N/A";
       license = prefs.getString('LicenseNo') ?? "N/A";
-      vehicle = prefs.getInt('VehicleID')!;
     });
   }
 
@@ -102,7 +101,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
 
             SizedBox(
               width: 320,
@@ -117,20 +116,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
               ),
             ),
 
-            const SizedBox(height: 20),
+         
 
-            SizedBox(
-              width: 320,
-              height: cardHeight,
-              child: CustomCard(
-                title: "Start Navigation",
-                subtitle: "Navigate to next point",
-                icon: Icons.navigation,
-                onTap: () {
-                  Navigator.pushNamed(context, '/navigation');
-                },
-              ),
-            ),
+        
           ],
         ),
       ),
@@ -155,8 +143,7 @@ Widget buildProfileTab() {
               title: driverName,
               subtitle:
                   "Phone: $phone\n"
-                  "LicenseNO: $license\n"
-                  "VehicleID: $vehicle",
+                  "LicenseNO: $license\n",
               icon: Icons.person,
               onTap: () {},
             ),

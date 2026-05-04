@@ -9,14 +9,14 @@ import 'package:garbage_collection_system/screens/user/newuserdashboard.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-class Loginscreen extends StatefulWidget {
-  const Loginscreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<Loginscreen> createState() => _LoginscreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginscreenState extends State<Loginscreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
   TextEditingController emailController = TextEditingController();
@@ -63,24 +63,25 @@ class _LoginscreenState extends State<Loginscreen> {
       // =========================
       // ✅ USER LOGIN (WITH TOKEN)
       // =========================
-      if (selectedRole == 'User') {
-        final data = jsonDecode(res.body);
-        final String token = data['token'] ?? "";
+    if (selectedRole == 'User') {
+  final data = jsonDecode(res.body);
+  final String token = data['token'] ?? "";
 
-        if (token.isEmpty) {
-          throw Exception("Token missing from response");
-        }
+  if (token.isEmpty) {
+    throw Exception("Token missing from response");
+  }
 
-        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+  // ✅ Token se decode karo — keys backend se match honi chahiye
+  Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-        final String userName = decodedToken['UserName'] ?? "Unknown";
-        final int userId = decodedToken['UserId'] ?? 0;
+  final int userId   = decodedToken['UserID'] ?? 0;    // ✅ capital 'ID'
+  final String userName = decodedToken['UserName'] ?? "Unknown"; // ✅ same as backend
 
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-        await prefs.setString('UserName', userName);
-        await prefs.setInt('UserId', userId);
-      }
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('token', token);
+  await prefs.setString('UserName', userName);
+  await prefs.setInt('UserId', userId);
+}
 
       // =========================
       //  DRIVER / COLLECTOR (NO TOKEN)

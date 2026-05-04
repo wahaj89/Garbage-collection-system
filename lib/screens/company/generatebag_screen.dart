@@ -36,7 +36,7 @@ class _GeneratebagScreenState extends State<GeneratebagScreen> {
     });
 
     try {
-      final result = await CompanyApi.generateBags(
+      final result = await CompanyApi.generateBags1(
         userId: widget.userId,
         quantity: widget.bags,
         bagType: bagType,
