@@ -326,6 +326,30 @@ Future<Map<String, dynamic>?> getScheduledPickup() async {
   // ✅ 404 = no pickup today — return null gracefully, don't throw
   return null;
 }
+  static Future<Map<String, dynamic>?> getUserLocation() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getInt('UserId') ?? '';
 
+      final response = await http.get(
+        Uri.parse("$_baseUrl/users/getUserLocation?UserID=$token"),
+        headers: {
+        
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        return decoded['data'];
+      } else {
+        print("User location error: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Get user location error: $e");
+      return null;
+    }
+  }
 }
 

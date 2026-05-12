@@ -15,8 +15,8 @@ class _CompanydashboardState extends State<Companydashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-       
-        title: const Center(child: Text("Manage Plans")),
+        title: const Text("Manage Plans"),
+        centerTitle: true,
         backgroundColor: const Color(0xFF99C13D),
       ),
       body: Padding(
@@ -24,7 +24,6 @@ class _CompanydashboardState extends State<Companydashboard> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-
               SizedBox(height: columnSpacing),
 
               // Row 1
@@ -58,7 +57,10 @@ class _CompanydashboardState extends State<Companydashboard> {
                   subtitle: '',
                   icon: Icons.qr_code,
                   onTap: () {
-                    Navigator.pushNamed(context, '/viewExtraPickupRequests');
+                    Navigator.pushNamed(
+                      context,
+                      '/viewExtraPickupRequests',
+                    );
                   },
                 ),
                 CustomCard(
@@ -82,9 +84,19 @@ class _CompanydashboardState extends State<Companydashboard> {
   Widget buildRow(BuildContext context, Widget card1, Widget card2) {
     return Row(
       children: [
-        Expanded(child: card1),
+        Expanded(
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: card1,
+          ),
+        ),
         const SizedBox(width: 20),
-        Expanded(child: card2),
+        Expanded(
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: card2,
+          ),
+        ),
       ],
     );
   }

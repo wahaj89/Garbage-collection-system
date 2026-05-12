@@ -520,7 +520,7 @@ Future<List<dynamic>> viewPlans() async {
   );
 
 
-  if (res.statusCode != 200) {
+  if (res.statusCode != 200 && res.statusCode != 201) {
     throw Exception(jsonDecode(res.body)["message"]);
   }
 }
@@ -604,6 +604,33 @@ Future<List<dynamic>> getCompanyCollectors() async {
   } catch (e) {
     print("Error fetching collectors: $e");
     return [];
+  }
+}
+//resolve complaint
+static Future<bool> resolveComplaint(int complaintID) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    int companyId = prefs.getInt('CompanyID')??0;
+    final response = await http.put(
+      Uri.parse('$_baseUrl/company/resolveComplaint?CompanyID=$companyId'),
+      headers: {
+        'Content-Type': 'application/json',
+      
+      },
+      body: jsonEncode({
+        "ComplaintID": complaintID,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print(response.body);
+      return false;
+    }
+  } catch (e) {
+    print(e);
+    return false;
   }
 }
 }

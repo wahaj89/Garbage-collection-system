@@ -3,7 +3,6 @@ import 'package:garbage_collection_system/Api/CompanyController.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
 import 'package:garbage_collection_system/screens/company/generate_qrcode.dart';
 
-
 class ViewSubscribers extends StatefulWidget {
   const ViewSubscribers({super.key});
 
@@ -84,32 +83,34 @@ class _ViewSubscribersState extends State<ViewSubscribers> {
                           ? Icons.verified_user
                           : Icons.cancel,
 
-               onTap: () {
-  final userIdRaw = sub['UserID'];
-  final bagsRaw = sub['BagsPerDay'];
-  final bagTypeRaw = sub['Type']; // 👈 ADD THIS
+                      onTap: () {
+                        if (selectedIndex == 1) return;
+                        final userIdRaw = sub['UserID'];
+                        final bagsRaw = sub['BagsPerDay'];
+                        final bagTypeRaw = sub['Type'];
 
-  final int userId = userIdRaw is int
-      ? userIdRaw
-      : int.tryParse(userIdRaw.toString()) ?? 0;
+                        final int userId = userIdRaw is int
+                            ? userIdRaw
+                            : int.tryParse(userIdRaw.toString()) ?? 0;
 
-  final int bags = bagsRaw is int
-      ? bagsRaw
-      : int.tryParse(bagsRaw.toString()) ?? 1;
+                        final int bags = bagsRaw is int
+                            ? bagsRaw
+                            : int.tryParse(bagsRaw.toString()) ?? 1;
 
-  final String bagType = bagTypeRaw ?? "Recyclable"; // 👈 default fallback
+                        final String bagType =
+                            bagTypeRaw ?? "Recyclable"; // 👈 default fallback
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => GenerateQrcode(
-        userId: userId,
-        bags: bags,
-        bagType: bagType, // 👈 PASS HERE
-      ),
-    ),
-  );
-}
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => GenerateQrcode(
+                              userId: userId,
+                              bags: bags,
+                              bagType: bagType, // 👈 PASS HERE
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },

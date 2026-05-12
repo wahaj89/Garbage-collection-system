@@ -133,9 +133,20 @@ class _AddScheduleState extends State<AddSchedule> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Schedule Created Successfully")),
       );
+      // 🔥 Clear form
+      setState(() {
+        selectedZoneID = null;
+        selectedDriverID = null;
+        selectedDayOfWeek = null;
+        startTime = null;
+        endTime = null;
+        startController.clear();
+        endController.clear();
+      });
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(content: Text("Error creating schedule: $e")),
       );
     }
   }
