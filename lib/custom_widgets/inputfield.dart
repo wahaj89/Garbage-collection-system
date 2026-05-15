@@ -7,9 +7,11 @@ class CustomInput extends StatelessWidget {
   final TextInputType keyboardType;
   final bool obscureText;
   final Widget? suffixIcon;
-  final CustomButton? button; // 👈 make nullable
+  final CustomButton? button;
   final String? Function(String?)? validator;
-  final bool? readOnly; // 👈 new property
+  final bool? readOnly;
+  final int maxLines;
+  final int? maxLength;
 
   const CustomInput({
     super.key,
@@ -19,7 +21,10 @@ class CustomInput extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.button,
-    this.validator, this.readOnly, 
+    this.validator,
+    this.readOnly,
+    this.maxLines = 1,
+    this.maxLength,
   });
 
   @override
@@ -29,6 +34,9 @@ class CustomInput extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      readOnly: readOnly ?? false,
+      maxLines: maxLines,
+      maxLength: maxLength,
       decoration: InputDecoration(
         labelText: label,
         filled: true,
@@ -36,8 +44,13 @@ class CustomInput extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-
-        // 👇 priority: button > suffixIcon
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Color(0xFF99C13D),
+            width: 1.5,
+          ),
+        ),
         suffixIcon: button != null
             ? Padding(
                 padding: const EdgeInsets.all(6),

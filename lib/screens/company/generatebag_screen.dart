@@ -5,7 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 class GeneratebagScreen extends StatefulWidget {
   final int userId;
   final int bags;
-  final String bagType; // 👈 passed from previous screen
+  final String bagType; 
 
   const GeneratebagScreen({
     super.key,
@@ -26,7 +26,7 @@ class _GeneratebagScreenState extends State<GeneratebagScreen> {
   @override
   void initState() {
     super.initState();
-    bagType = widget.bagType; // 🔥 auto set
+    bagType = widget.bagType; 
   }
 
   Future<void> generateBags() async {
@@ -40,7 +40,7 @@ class _GeneratebagScreenState extends State<GeneratebagScreen> {
         userId: widget.userId,
         quantity: widget.bags,
         bagType: bagType,
-        weightLimit: 5, // 🔥 default (future: dynamic kar sakte ho)
+        weightLimit: 5, 
       );
 
       setState(() {

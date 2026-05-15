@@ -104,7 +104,7 @@ class _ManageDriverVehiclesState extends State<ManageDriverVehicles> {
                   },
                 ),
                 CustomCard(
-                  title: "View All Collectors",
+                  title: "Manage Driver Leaves",
                   subtitle: '',
                   icon: Icons.person,
                   onTap: () {
@@ -112,6 +112,19 @@ class _ManageDriverVehiclesState extends State<ManageDriverVehicles> {
                   },
                 ),
               ),
+              SizedBox(height: columnSpacing),
+               buildRow(
+                context,
+                CustomCard(
+                  title: "Manage leaves",
+                  subtitle: '',
+                  icon: Icons.beach_access,
+                  onTap: () {
+                    Navigator.pushNamed(context, '/manageLeaves');
+                  },
+                ),
+                Container(), // Empty container for spacing
+               )
             ],
           ),
         ),

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:garbage_collection_system/Api/userController.dart';
 import 'package:garbage_collection_system/custom_widgets/card.dart';
-import 'package:garbage_collection_system/custom_widgets/button.dart'; // update path as needed
+import 'package:garbage_collection_system/custom_widgets/button.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -25,84 +25,126 @@ class _ProfileState extends State<Profile> {
   Future<void> fetchUserProfile() async {
     try {
       final response = await UserApi().fetchUserDetails();
+
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         setState(() {
           userData = data;
           subscriptionData = data['Subscription'];
           isLoading = false;
         });
       } else {
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+        });
       }
     } catch (e) {
-      setState(() => isLoading = false);
-      print("Error fetching profile: $e");
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      debugPrint("Error fetching profile: $e");
     }
+  }
+
+  String formatDate(dynamic date) {
+    if (date == null) return "N/A";
+
+    try {
+      return date.toString().split('T')[0];
+    } catch (e) {
+      return "N/A";
+    }
+  }
+
+  String getSubscriptionText() {
+    if (subscriptionData == null) {
+      return "Not Subscribed";
+    }
+
+    return "Active Plan #${subscriptionData!['PlanID'] ?? 'N/A'}\n"
+        "From: ${formatDate(subscriptionData!['StartDate'])}\n"
+        "To: ${formatDate(subscriptionData!['EndDate'])}";
   }
 
   void _handleLogout() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to logout?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
-            },
-            child: const Text(
-              "Logout",
-              style: TextStyle(color: Colors.red),
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Cancel"),
             ),
-          ),
-        ],
-      ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
+              },
+              child: const Text(
+                "Logout",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isActive = subscriptionData != null;
-    final String subscriptionText = isActive
-        ? "Active (Plan #${subscriptionData!['PlanID']})\n"
-            "From: ${subscriptionData!['StartDate'].toString().split('T')[0]}\n"
-            "To:     ${subscriptionData!['EndDate'].toString().split('T')[0]}"
-        : "Not Subscribed";
+    final String fullName = userData?['FullName'] ?? 'N/A';
+    final String email = userData?['Email'] ?? 'N/A';
+    final String phone = userData?['Phone'] ?? 'N/A';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Center(child: Text("Profile")),
+        title: const Text("Profile"),
+        centerTitle: true,
         automaticallyImplyLeading: false,
-        backgroundColor: const Color(0xFF99C13D),
+       
+        foregroundColor: Colors.black,
+        elevation: 0,
       ),
+
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF99C13D),
+              ),
+            )
           : userData == null
-              ? const Center(child: Text("No user data found"))
-              : Padding(
+              ? const Center(
+                  child: Text(
+                    "No user data found",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                )
+              : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // Profile Card
                       SizedBox(
                         width: double.infinity,
-                        height: 350,
                         child: CustomCard(
-                          title: "${userData!['FullName'] ?? 'N/A'}",
-                          subtitle: "Email: ${userData!['Email'] ?? 'N/A'}\n\n"
-                              "Phone: ${userData!['Phone'] ?? 'N/A'}\n\n"
-                              "Subscription: $subscriptionText",
+                          title: fullName,
+                          subtitle: "Email: $email\n\n"
+                              "Phone: $phone\n\n"
+                              "Subscription: ${getSubscriptionText()}",
                           icon: Icons.person,
                           onTap: () {
                             Navigator.pushNamed(context, '/editProfile');
@@ -110,9 +152,8 @@ class _ProfileState extends State<Profile> {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
 
-                      // Logout Button
                       SizedBox(
                         width: double.infinity,
                         child: CustomButton(
@@ -122,8 +163,6 @@ class _ProfileState extends State<Profile> {
                           onPressed: _handleLogout,
                         ),
                       ),
-
-                      const SizedBox(height: 16),
                     ],
                   ),
                 ),

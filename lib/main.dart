@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:garbage_collection_system/screens/Admin/adminLogin.dart';
+import 'package:garbage_collection_system/screens/Admin/admin_dashboard.dart';
+import 'package:garbage_collection_system/screens/Driver/apply_leave.dart';
 import 'package:garbage_collection_system/screens/Driver/driver_dashboard.dart';
 import 'package:garbage_collection_system/screens/Driver/pickup_points.dart';
 import 'package:garbage_collection_system/screens/Driver/view_schedule.dart';
@@ -10,10 +13,9 @@ import 'package:garbage_collection_system/screens/company/add_schedule.dart';
 import 'package:garbage_collection_system/screens/company/add_vehicle.dart';
 import 'package:garbage_collection_system/screens/company/add_zone.dart';
 import 'package:garbage_collection_system/screens/company/addplan.dart';
-import 'package:garbage_collection_system/screens/company/companyDashBoard.dart' hide Companydashboard;
-import 'package:garbage_collection_system/screens/company/generate_qrcode.dart';
 import 'package:garbage_collection_system/screens/company/manage_driver_vehicles.dart';
 import 'package:garbage_collection_system/screens/company/manage_plans.dart';
+import 'package:garbage_collection_system/screens/company/manageleaves.dart';
 import 'package:garbage_collection_system/screens/user/Companies.dart';
 import 'package:garbage_collection_system/screens/company/company_dashboard1.dart';
 import 'package:garbage_collection_system/screens/company/manage_schedules.dart';
@@ -32,6 +34,7 @@ import 'package:garbage_collection_system/screens/splash/splash2.dart';
 import 'package:garbage_collection_system/screens/user/extra_pickups.dart';
 import 'package:garbage_collection_system/screens/user/fileacomplaint.dart';
 import 'package:garbage_collection_system/screens/user/profile.dart';
+import 'package:garbage_collection_system/screens/user/rate_company.dart';
 import 'package:garbage_collection_system/screens/user/subscription_status.dart';
 import 'package:garbage_collection_system/screens/user/view_driver_location.dart';
 import 'package:garbage_collection_system/screens/user/view_history.dart';
@@ -94,7 +97,12 @@ class MyApp extends StatelessWidget {
         '/scanQR':(context)=> const ScanQr(),
         '/pickupPoints':(context)=> const PickupPoints(),
         '/trackPickup':(context)=> const ViewDriverLocation(),
-        '/loginCompany':(context)=> const Loginscreen()
+        '/loginCompany':(context)=> const Loginscreen(),
+        '/rateCompany':(context)=> const RateCompany(),
+        '/applyLeave':(context)=> const DriverLeaveApplicationScreen(),
+        '/manageLeaves':(context)=> const CompanyLeaveRequestsScreen(),
+        '/loginAdmin':(context)=> const AdminLoginScreen(),
+        '/adminDashboard':(context)=> const AdminDashboardScreen(),
       },
     );
   }

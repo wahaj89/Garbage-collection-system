@@ -34,12 +34,22 @@ class _PickupPointsState extends State<PickupPoints> {
   StreamSubscription<Position>? positionStream;
 
   Timer? locationTimer;
+  Timer? routeMoveTimer;
+
   Position? lastPosition;
   Position? lastSentPosition;
 
   double bearing = 0;
 
   BitmapDescriptor? truckIcon;
+
+  List<LatLng> routePoints = [];
+
+  bool isRouteStarted = false;
+  bool isMoving = false;
+
+  static const double jumpMeters = 5;
+  static const int jumpSeconds = 2;
 
   @override
   void initState() {
@@ -53,7 +63,7 @@ class _PickupPointsState extends State<PickupPoints> {
   Future<void> loadTruckIcon() async {
     truckIcon = await getResizedMarkerIcon(
       'assets/truck.png',
-      50, 
+      50,
     );
 
     updateMarkers();
@@ -87,6 +97,9 @@ class _PickupPointsState extends State<PickupPoints> {
         distanceFilter: 5,
       ),
     ).listen((Position position) {
+      // ✅ Jab manual route start ya pause ho, GPS truck ko wapis real location par nahi le jayega
+      if (isRouteStarted) return;
+
       if (lastPosition != null) {
         bearing = calculateBearing(
           LatLng(lastPosition!.latitude, lastPosition!.longitude),
@@ -110,7 +123,7 @@ class _PickupPointsState extends State<PickupPoints> {
         ),
       );
     });
-    
+
     locationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (lastPosition == null) return;
 
@@ -141,6 +154,15 @@ class _PickupPointsState extends State<PickupPoints> {
     );
   }
 
+  void sendCurrentLatLngToApi() {
+    if (currentLocation == null) return;
+
+    DriverApi.updateDriverLocation(
+      lat: currentLocation!.latitude,
+      lng: currentLocation!.longitude,
+    );
+  }
+
   // ================= LOAD POINTS =================
   Future<void> loadPoints() async {
     try {
@@ -163,7 +185,6 @@ class _PickupPointsState extends State<PickupPoints> {
   void updateMarkers() {
     markers.clear();
 
-    // Driver small truck marker
     if (currentLocation != null) {
       markers.add(
         Marker(
@@ -181,7 +202,6 @@ class _PickupPointsState extends State<PickupPoints> {
       );
     }
 
-    // Pickup point markers
     for (int i = 0; i < points.length; i++) {
       final p = points[i];
 
@@ -278,6 +298,16 @@ class _PickupPointsState extends State<PickupPoints> {
     if (currentLocation == null || selectedStops.isEmpty) return;
 
     try {
+      removeReachedStops();
+
+      if (selectedStops.isEmpty) {
+        polylines.clear();
+        routePoints.clear();
+
+        if (mounted) setState(() {});
+        return;
+      }
+
       List<int> optimized = optimizeRouteOrder(selectedStops);
 
       String coords =
@@ -316,6 +346,8 @@ class _PickupPointsState extends State<PickupPoints> {
         );
       }
 
+      routePoints = poly;
+
       polylines.clear();
 
       polylines.add(
@@ -324,7 +356,6 @@ class _PickupPointsState extends State<PickupPoints> {
           color: Colors.blue,
           width: 6,
           points: poly,
-          onTap: () => moveAlongRoute(poly),
         ),
       );
 
@@ -334,6 +365,214 @@ class _PickupPointsState extends State<PickupPoints> {
     } catch (e) {
       debugPrint("Draw route error: $e");
     }
+  }
+
+  // ================= START / PAUSE / RESUME BUTTON =================
+  Future<void> startRouteFromButton() async {
+    // ✅ Agar truck chal raha hai to pause karo
+    if (isMoving) {
+      pauseRouteMovement();
+      return;
+    }
+
+    if (currentLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Current location not found"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (selectedStops.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("No pickup points selected"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      // ✅ Start ya resume dono case mein true
+      isRouteStarted = true;
+      isMoving = true;
+    });
+
+    // ✅ Current paused position se fresh route banao
+    await drawMultiRoute();
+
+    if (routePoints.isEmpty) {
+      setState(() {
+        isMoving = false;
+
+        // ✅ false nahi karna, warna GPS stream truck ko wapis real location par le jayegi
+        isRouteStarted = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Route not found"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    startJumpMovement();
+  }
+
+  // ================= 5 METER JUMP EVERY 2 SEC =================
+  void startJumpMovement() {
+    routeMoveTimer?.cancel();
+
+    routeMoveTimer = Timer.periodic(
+      const Duration(seconds: jumpSeconds),
+      (timer) async {
+        if (currentLocation == null) return;
+
+        if (selectedStops.isEmpty) {
+          stopRouteMovement();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Route completed"),
+              backgroundColor: Color(0xFF99C13D),
+            ),
+          );
+          return;
+        }
+
+        if (routePoints.length < 2) {
+          await drawMultiRoute();
+          return;
+        }
+
+        LatLng? nextPosition = getNextPositionByMeters(jumpMeters);
+
+        if (nextPosition == null) {
+          await drawMultiRoute();
+          return;
+        }
+
+        bearing = calculateBearing(currentLocation!, nextPosition);
+        currentLocation = nextPosition;
+
+        updateMarkers();
+        sendCurrentLatLngToApi();
+
+        mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: currentLocation!,
+              zoom: 17,
+              tilt: 45,
+              bearing: bearing,
+            ),
+          ),
+        );
+
+        // ✅ Har 2 sec baad route current truck location se dobara update
+        await drawMultiRoute();
+      },
+    );
+  }
+
+  LatLng? getNextPositionByMeters(double meters) {
+    if (currentLocation == null || routePoints.length < 2) return null;
+
+    LatLng current = currentLocation!;
+    double remainingMeters = meters;
+
+    for (int i = 0; i < routePoints.length - 1; i++) {
+      LatLng end = routePoints[i + 1];
+
+      double distanceFromCurrentToEnd = Geolocator.distanceBetween(
+        current.latitude,
+        current.longitude,
+        end.latitude,
+        end.longitude,
+      );
+
+      if (distanceFromCurrentToEnd == 0) continue;
+
+      if (distanceFromCurrentToEnd <= remainingMeters) {
+        current = end;
+        remainingMeters -= distanceFromCurrentToEnd;
+        continue;
+      }
+
+      double ratio = remainingMeters / distanceFromCurrentToEnd;
+
+      double lat = current.latitude + (end.latitude - current.latitude) * ratio;
+      double lng =
+          current.longitude + (end.longitude - current.longitude) * ratio;
+
+      return LatLng(lat, lng);
+    }
+
+    return routePoints.isNotEmpty ? routePoints.last : null;
+  }
+
+  // ================= PAUSE ROUTE =================
+  void pauseRouteMovement() {
+    routeMoveTimer?.cancel();
+    routeMoveTimer = null;
+
+    if (mounted) {
+      setState(() {
+        isMoving = false;
+
+        // ✅ Important: true rakho taake GPS stream truck ko wapis na le jaye
+        isRouteStarted = true;
+      });
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Route paused"),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
+  // ================= STOP ROUTE COMPLETELY =================
+  void stopRouteMovement() {
+    routeMoveTimer?.cancel();
+    routeMoveTimer = null;
+
+    if (mounted) {
+      setState(() {
+        isMoving = false;
+        isRouteStarted = false;
+      });
+    }
+  }
+
+  // ================= REMOVE REACHED STOPS =================
+  void removeReachedStops() {
+    if (currentLocation == null) return;
+
+    selectedStops.removeWhere((index) {
+      final p = points[index];
+
+      final lat = double.tryParse(p['Latitude'].toString());
+      final lng = double.tryParse(p['Longitude'].toString());
+
+      if (lat == null || lng == null) return false;
+
+      double distance = Geolocator.distanceBetween(
+        currentLocation!.latitude,
+        currentLocation!.longitude,
+        lat,
+        lng,
+      );
+
+      // ✅ 8 meter ke andar point reached maan lo
+      return distance <= 8;
+    });
   }
 
   // ================= BEARING =================
@@ -350,43 +589,11 @@ class _PickupPointsState extends State<PickupPoints> {
     return (math.atan2(y, x) * 180 / math.pi + 360) % 360;
   }
 
-  // ================= SMOOTH MOVEMENT =================
-  Future<void> moveAlongRoute(List<LatLng> poly) async {
-    for (int i = 0; i < poly.length - 1; i++) {
-      LatLng start = poly[i];
-      LatLng end = poly[i + 1];
-
-      for (double t = 0; t <= 1; t += 0.1) {
-        await Future.delayed(const Duration(milliseconds: 100));
-
-        double lat = start.latitude + (end.latitude - start.latitude) * t;
-        double lng = start.longitude + (end.longitude - start.longitude) * t;
-
-        LatLng newPos = LatLng(lat, lng);
-
-        bearing = calculateBearing(start, end);
-        currentLocation = newPos;
-
-        updateMarkers();
-
-        mapController?.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: newPos,
-              zoom: 17,
-              tilt: 45,
-              bearing: bearing,
-            ),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   void dispose() {
     positionStream?.cancel();
     locationTimer?.cancel();
+    routeMoveTimer?.cancel();
     mapController?.dispose();
     super.dispose();
   }
@@ -429,10 +636,15 @@ class _PickupPointsState extends State<PickupPoints> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(10),
-                  child: CustomButton(
-                    text: "Start Route",
-                    icon: Icons.alt_route,
-                    onPressed: drawMultiRoute,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: CustomButton(
+                      text: isMoving ? "Stop Route" : "Start Route",
+                      icon: isMoving
+                          ? Icons.pause_circle_outline
+                          : Icons.alt_route,
+                      onPressed: startRouteFromButton,
+                    ),
                   ),
                 ),
               ],

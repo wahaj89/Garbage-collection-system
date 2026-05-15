@@ -4,6 +4,11 @@ import 'package:garbage_collection_system/custom_widgets/inputfield.dart';
 import 'package:garbage_collection_system/custom_widgets/button.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+// ✅ PDF imports
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
 class GenerateQrcode extends StatefulWidget {
   final int userId;
   final int bags;
@@ -27,6 +32,7 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
 
   List<String> generatedQRs = [];
   bool isLoading = false;
+  bool isPdfDownloading = false;
 
   void generateBags() async {
     if (!_formKey.currentState!.validate()) return;
@@ -39,9 +45,9 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
     final weight = double.parse(weightController.text.trim());
 
     final result = await CompanyApi.generateBags(
-      userId: widget.userId,      // ✅ auto
-      quantity: widget.bags,      // ✅ auto
-      bagType: widget.bagType,   // ✅ auto
+      userId: widget.userId,
+      quantity: widget.bags,
+      bagType: widget.bagType,
       weightLimit: weight,
     );
 
@@ -51,15 +57,121 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
 
     if (result.containsKey("error")) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result["error"])),
+        SnackBar(content: Text(result["error"].toString())),
       );
     } else {
       setState(() {
         generatedQRs = List<String>.from(result["qrCodes"]);
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Bags Generated Successfully")),
       );
+    }
+  }
+
+  // ✅ Download all QR codes as PDF
+  Future<void> downloadAllQRCodesPdf() async {
+    if (generatedQRs.isEmpty) return;
+
+    try {
+      setState(() {
+        isPdfDownloading = true;
+      });
+
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(24),
+          build: (pw.Context context) {
+            return [
+              pw.Text(
+                "Generated QR Bags",
+                style: pw.TextStyle(
+                  fontSize: 22,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+
+              pw.SizedBox(height: 8),
+
+              pw.Text("User ID: ${widget.userId}"),
+              pw.Text("Total Bags: ${widget.bags}"),
+              pw.Text("Bag Type: ${widget.bagType}"),
+              pw.Text("Weight Limit: ${weightController.text.trim()}"),
+
+              pw.SizedBox(height: 20),
+
+              pw.Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: List.generate(generatedQRs.length, (index) {
+                  final qrData = generatedQRs[index];
+
+                  return pw.Container(
+                    width: 240,
+                    padding: const pw.EdgeInsets.all(12),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey400),
+                      borderRadius: pw.BorderRadius.circular(8),
+                    ),
+                    child: pw.Column(
+                      mainAxisSize: pw.MainAxisSize.min,
+                      children: [
+                        pw.Text(
+                          "QR Code ${index + 1}",
+                          style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+
+                        pw.SizedBox(height: 10),
+
+                        pw.BarcodeWidget(
+                          barcode: pw.Barcode.qrCode(),
+                          data: qrData,
+                          width: 150,
+                          height: 150,
+                        ),
+
+                        pw.SizedBox(height: 10),
+
+                        pw.Text(
+                          qrData,
+                          textAlign: pw.TextAlign.center,
+                          style: const pw.TextStyle(fontSize: 8),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ];
+          },
+        ),
+      );
+
+      final pdfBytes = await pdf.save();
+
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: "qr_codes_user_${widget.userId}.pdf",
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("QR Codes PDF Ready")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("PDF download failed: $e")),
+      );
+    } finally {
+      setState(() {
+        isPdfDownloading = false;
+      });
     }
   }
 
@@ -74,7 +186,7 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // ✅ Info Card (auto values show karne ke liye)
+            // ✅ Info Card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -92,7 +204,7 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
 
             const SizedBox(height: 20),
 
-            // ✅ Only Weight Input
+            // ✅ Weight Input
             Form(
               key: _formKey,
               child: Column(
@@ -105,9 +217,16 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
                       if (value == null || value.isEmpty) {
                         return "Enter Weight Limit";
                       }
+
+                      final weight = double.tryParse(value);
+                      if (weight == null || weight <= 0) {
+                        return "Enter valid weight";
+                      }
+
                       return null;
                     },
                   ),
+
                   const SizedBox(height: 25),
 
                   isLoading
@@ -119,6 +238,18 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
                 ],
               ),
             ),
+
+            // ✅ Download button only after QR generated
+            if (generatedQRs.isNotEmpty) ...[
+              const SizedBox(height: 15),
+
+              isPdfDownloading
+                  ? const CircularProgressIndicator()
+                  : CustomButton(
+                      text: "Download All QR PDF",
+                      onPressed: downloadAllQRCodesPdf,
+                    ),
+            ],
 
             const SizedBox(height: 20),
 
@@ -140,8 +271,10 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
                                 Text(
                                   "QR Code ${index + 1}",
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+
                                 const SizedBox(height: 10),
 
                                 QrImageView(
@@ -152,6 +285,7 @@ class _GenerateQrcodeState extends State<GenerateQrcode> {
                                 ),
 
                                 const SizedBox(height: 10),
+
                                 SelectableText(qrData),
                               ],
                             ),

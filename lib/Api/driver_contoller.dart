@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:garbage_collection_system/Api/ip.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverApi {
-  static const String _baseUrl =
-      "https://pauseful-raymon-unilluminant.ngrok-free.dev/api";
+ // static const String _baseUrl ="https://pauseful-raymon-unilluminant.ngrok-free.dev/api";
+    static final String _baseUrl = Ip.baseUrl;  
 
   Future<int?> getId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -99,4 +100,145 @@ class DriverApi {
     print("Location update failed: $e");
   }
 }
-}
+
+String formatDate(DateTime date) {
+    return "${date.year.toString().padLeft(4, '0')}-"
+        "${date.month.toString().padLeft(2, '0')}-"
+        "${date.day.toString().padLeft(2, '0')}";
+  }
+
+  dynamic _decodeResponse(http.Response response) {
+    print("STATUS CODE: ${response.statusCode}");
+    print("RESPONSE BODY: ${response.body}");
+
+    if (response.body.isEmpty) {
+      throw Exception("Empty response from server");
+    }
+
+    try {
+      return jsonDecode(response.body);
+    } catch (e) {
+      throw Exception(
+        "Server JSON nahi bhej raha. Route ya URL wrong ho sakta hai. Body: ${response.body}",
+      );
+    }
+  }
+
+  
+  
+  Future<Map<String, dynamic>> applyDriverLeave({
+    required int driverId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String reason,
+  }) async {
+    final url = Uri.parse(
+      "$_baseUrl/drivers/applyDriverLeave?DriverID=$driverId",
+    );
+
+    print("APPLY LEAVE URL: $url");
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "StartDate": formatDate(startDate),
+        "EndDate": formatDate(endDate),
+        "Reason": reason,
+      }),
+    );
+
+    final data = _decodeResponse(response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(data);
+    } else {
+      throw Exception(data["message"] ?? "Leave apply failed");
+    }
+  }
+
+  Future<List<dynamic>> getDriverLeaves({
+    required int companyId,
+    String? status,
+  }) async {
+    String url = "$_baseUrl/drivers/getDriverLeaves?CompanyID=$companyId";
+
+    if (status != null && status.isNotEmpty) {
+      url += "&Status=$status";
+    }
+
+    print("GET LEAVES URL: $url");
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final data = _decodeResponse(response);
+
+    if (response.statusCode == 200) {
+      return List<dynamic>.from(data);
+    } else {
+      throw Exception(data["message"] ?? "Failed to load leaves");
+    }
+  }
+
+  Future<Map<String, dynamic>> reviewDriverLeave({
+    required int leaveId,
+    required String status,
+    String remarks = "",
+  }) async {
+    final url = Uri.parse(
+      "$_baseUrl/drivers/reviewDriverLeave/$leaveId",
+    );
+
+    print("REVIEW LEAVE URL: $url");
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "Status": status,
+        "Remarks": remarks,
+      }),
+    );
+
+    final data = _decodeResponse(response);
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(data);
+    } else {
+      throw Exception(data["message"] ?? "Review failed");
+    }
+  }
+
+  Future<Map<String, dynamic>> driverReturned({
+    required int leaveId,
+  }) async {
+    final url = Uri.parse(
+      "$_baseUrl/drivers/driverReturned/$leaveId",
+    );
+
+    print("DRIVER RETURNED URL: $url");
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final data = _decodeResponse(response);
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(data);
+    } else {
+      throw Exception(data["message"] ?? "Return failed");
+    }
+  }}

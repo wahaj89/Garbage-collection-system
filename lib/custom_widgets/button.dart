@@ -3,17 +3,15 @@ import 'package:flutter/material.dart';
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-  final IconData? icon; 
+  final IconData? icon;
   final Color? backgroundColor;
-  
 
   const CustomButton({
     super.key,
     required this.text,
     required this.onPressed,
-    this.icon, 
+    this.icon,
     this.backgroundColor,
-
   });
 
   @override
@@ -25,15 +23,16 @@ class CustomButton extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-      
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (icon != null) 
+          if (icon != null) ...[
             Icon(icon, color: Colors.black),
             const SizedBox(width: 8),
+          ],
           Text(
             text,
             style: const TextStyle(

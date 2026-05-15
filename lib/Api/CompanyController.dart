@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:garbage_collection_system/Api/ip.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CompanyApi {
-  static const String _baseUrl =
-      "https://pauseful-raymon-unilluminant.ngrok-free.dev/api";
-
+  //static const String _baseUrl ="https://pauseful-raymon-unilluminant.ngrok-free.dev/api";
+  static final String _baseUrl = Ip.baseUrl; // Local URL for testing
   // Common headers for ngrok + JSON
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',

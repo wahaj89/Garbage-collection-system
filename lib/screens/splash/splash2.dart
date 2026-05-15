@@ -48,6 +48,17 @@ class _SplashState extends State<Splash2> {
                   },
                 ),
               ),
+               const SizedBox(height: 40),
+              SizedBox(
+                width: 200,
+                height: 50,
+                child: CustomButton(
+                  text: "Start as Admin",
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/loginAdmin');
+                  },
+                ),
+              ),
             ],
           )),
         ),

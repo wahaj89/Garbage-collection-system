@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:garbage_collection_system/Api/ip.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectorApi {
-  static const String baseUrl ="https://pauseful-raymon-unilluminant.ngrok-free.dev/api"; // 🔥 change this
+  //static const String baseUrl ="https://pauseful-raymon-unilluminant.ngrok-free.dev/api"; 
+  static final String baseUrl = Ip.baseUrl; // Local URL for testing
 
   static Future<Map<String, dynamic>> addCollector({
     required int CompanyID,
